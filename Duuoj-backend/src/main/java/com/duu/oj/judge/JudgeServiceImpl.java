@@ -1,5 +1,7 @@
 package com.duu.oj.judge;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONUtil;
 import com.duu.oj.common.ErrorCode;
 import com.duu.oj.exception.BusinessException;
@@ -8,10 +10,10 @@ import com.duu.oj.judge.codesandbox.CodeSandboxFactory;
 import com.duu.oj.judge.codesandbox.CodeSandboxProxy;
 import com.duu.oj.judge.codesandbox.model.ExecuteCodeRequest;
 import com.duu.oj.judge.codesandbox.model.ExecuteCodeResponse;
+import com.duu.oj.judge.codesandbox.model.JudgeInfo;
 import com.duu.oj.judge.strategy.JudgeContext;
 import com.duu.oj.judge.strategy.JudgeManager;
 import com.duu.oj.model.dto.question.JudgeCase;
-import com.duu.oj.judge.codesandbox.model.JudgeInfo;
 import com.duu.oj.model.entity.Question;
 import com.duu.oj.model.entity.QuestionSubmit;
 import com.duu.oj.model.enums.QuestionSubmitStatusEnum;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -70,7 +73,11 @@ public class JudgeServiceImpl implements JudgeService{
         List<String> inputList = judgeCases.stream().map(JudgeCase::getInput).collect(Collectors.toList());
         ExecuteCodeRequest executeCodeRequest = ExecuteCodeRequest.builder().code(code)
                 .language(language).inputList(inputList).build();
-        ExecuteCodeResponse executeCodeResponse = codeSandbox.executeCode(executeCodeRequest);
+
+        Map<String, Object> executeCodeRequestMap = BeanUtil.beanToMap(executeCodeRequest);
+        String post = HttpUtil.post("localhost:8103/api/execute", executeCodeRequestMap);
+        ExecuteCodeResponse executeCodeResponse = JSONUtil.toBean(post, ExecuteCodeResponse.class);
+        //ExecuteCodeResponse executeCodeResponse = codeSandbox.executeCode(executeCodeRequest);
         List<String> outputList = executeCodeResponse.getOutputList();
         JudgeInfo judgeInfo = executeCodeResponse.getJudgeInfo();
 //        5）根据沙箱的执行结果，设置题目的判题状态和信息

@@ -9,6 +9,7 @@ import com.duu.sandbox.model.JudgeInfo;
 import com.duu.sandbox.utils.ProcessUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +23,7 @@ import java.util.List;
  * @from ：https://github.com/0oHo0
  **/
 @Slf4j
+@Component
 public class JavaCodeSandboxTemplate implements CodeSandbox {
 
     private static final String SECURITY_MANAGER_PATH = "D:\\Data\\Code\\OJ\\DuuOJ-Sandbox\\src\\main\\resources" +
@@ -76,7 +78,8 @@ public class JavaCodeSandboxTemplate implements CodeSandbox {
         String userCodeParentFilePath = userCodeFile.getParentFile().getAbsolutePath();
         ArrayList<ExecuteMessage> executeMessageArrayList = new ArrayList<>();
         for (String input : inputList) {
-            String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s;%s -Djava.security.manager=%s Main %s", userCodeParentFilePath, SECURITY_MANAGER_PATH, SECURITY_MANAGER_CLASS_NAME, input);
+            //String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s;%s -Djava.security.manager=%s Main %s", userCodeParentFilePath, SECURITY_MANAGER_PATH, SECURITY_MANAGER_CLASS_NAME, input);
+            String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s Main %s", userCodeParentFilePath, input);
             try {
                 Process process = Runtime.getRuntime().exec(runCmd);
                 ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(process, "执行");
@@ -115,6 +118,8 @@ public class JavaCodeSandboxTemplate implements CodeSandbox {
         executeCodeResponse.setOutputList(outputList);
         executeCodeResponse.setMessage("执行通过");
         JudgeInfo judgeInfo = new JudgeInfo();
+        judgeInfo.setMessage("执行通过");
+        judgeInfo.setMemory(50L);
         judgeInfo.setTime(maxTime);
         executeCodeResponse.setJudgeInfo(judgeInfo);
         return executeCodeResponse;

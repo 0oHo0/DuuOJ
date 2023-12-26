@@ -213,7 +213,7 @@ questionSubmitAddRequest: QuestionSubmitAddRequest,
 ): CancelablePromise<BaseResponse_long_ | any> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/question_submit/do',
+            url: '/api/question/question_submit/do',
             body: questionSubmitAddRequest,
             errors: {
                 401: `Unauthorized`,
