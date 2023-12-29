@@ -1,3 +1,50 @@
-# 应用服务 WEB 访问端口
-server.port=8080
-
+# 公共配置文件
+# @author duu
+# @from https://github.com/0oHo0
+spring:
+  application:
+    name: Duuoj-backend-gateway
+  main:
+    web-application-type: reactive
+  # 默认 dev 环境
+  profiles:
+    active: dev
+  # 支持 swagger3
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+    gateway:
+      routes:
+        - id: Duuoj-backend-user-service  # 
+          uri: lb://Duuoj-backend-user-service  # 动态路由规则
+          predicates:
+            - Path=/api/user/**
+#        - id: Duuoj-backend-file-service
+#          uri: lb://Duuoj-backend-file-service
+#          predicates:
+#            - Path=/api/file/**
+        - id: Duuoj-backend-judge-service
+          uri: lb://Duuoj-backend-judge-service
+          predicates:
+            - Path=/api/judge/**
+        - id: Duuoj-backend-question-service
+          uri: lb://Duuoj-backend-question-service
+          predicates:
+            - Path=/api/question/**
+server:
+  port: 8104
+knife4j:
+  gateway:
+    # ① 第一个配置，开启gateway聚合组件
+    enabled: true
+    # ② 第二行配置，设置聚合模式采用discover服务发现的模式
+    strategy: discover
+    discover:
+      # ③ 第三行配置，开启discover模式
+      enabled: true
+      # ④ 第四行配置，聚合子服务全部为Swagger2规范的文档
+      version: swagger2

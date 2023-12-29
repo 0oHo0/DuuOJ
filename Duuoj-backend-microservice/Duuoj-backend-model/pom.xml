@@ -18,7 +18,7 @@
     </properties>
 <dependencies>
     <dependency>
-        <artifactId>Duuoj-backend-microservice</artifactId>
+        <artifactId>Duuoj-backend-common</artifactId>
         <groupId>com.duu</groupId>
         <version>0.0.1-SNAPSHOT</version>
     </dependency>
