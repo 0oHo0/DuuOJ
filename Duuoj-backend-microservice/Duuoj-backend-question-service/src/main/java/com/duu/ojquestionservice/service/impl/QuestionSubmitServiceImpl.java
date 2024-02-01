@@ -17,6 +17,7 @@ import com.duu.ojmodel.model.enums.QuestionSubmitLanguageEnum;
 import com.duu.ojmodel.model.enums.QuestionSubmitStatusEnum;
 import com.duu.ojmodel.model.vo.QuestionSubmitVO;
 import com.duu.ojquestionservice.mapper.QuestionSubmitMapper;
+import com.duu.ojquestionservice.rabbitmq.MyMessageProducer;
 import com.duu.ojquestionservice.service.QuestionService;
 import com.duu.ojquestionservice.service.QuestionSubmitService;
 import com.duu.ojserviceclient.service.JudgeFeignClient;
@@ -51,6 +52,8 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
     @Resource
     private JudgeFeignClient judgeFeignClient;
 
+    @Resource
+    private MyMessageProducer myMessageProducer;
     /**
      * 提交题目
      *
@@ -88,9 +91,10 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "数据插入失败");
         }
         Long questionSubmitId = questionSubmit.getId();
-        CompletableFuture.runAsync(()->{
-                judgeFeignClient.doJudge(questionSubmitId);
-        });
+        myMessageProducer.sendMessage("code_exchange","my_routingKey",String.valueOf(questionSubmitId));
+//        CompletableFuture.runAsync(() -> {
+////                judgeFeignClient.doJudge(questionSubmitId);
+//        });
         return questionSubmitId;
     }
 

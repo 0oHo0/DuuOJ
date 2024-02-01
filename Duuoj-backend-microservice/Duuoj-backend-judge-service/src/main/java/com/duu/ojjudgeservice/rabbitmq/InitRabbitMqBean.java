@@ -16,14 +16,14 @@ import javax.annotation.PostConstruct;
 @Component
 public class InitRabbitMqBean {
 
-    @Value("${spring.rabbitmq.host:localhost}")
+    @Value("${spring.rabbitmq.host}")
     private String host;
 
     @PostConstruct
     public void init() {
         try {
             ConnectionFactory factory = new ConnectionFactory();
-            factory.setHost(host);
+            //factory.setHost(host);
             Connection connection = factory.newConnection();
             Channel channel = connection.createChannel();
             String EXCHANGE_NAME = "code_exchange";
