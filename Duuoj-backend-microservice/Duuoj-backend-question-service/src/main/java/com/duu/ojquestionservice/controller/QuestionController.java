@@ -19,15 +19,17 @@ import com.duu.ojmodel.model.entity.*;
 import com.duu.ojmodel.model.vo.CommentVO;
 import com.duu.ojmodel.model.vo.QuestionSubmitVO;
 import com.duu.ojmodel.model.vo.QuestionVO;
+import com.duu.ojquestionservice.dao.QuestionEsDao;
 import com.duu.ojquestionservice.service.*;
 import com.duu.ojserviceclient.service.UserFeignClient;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import net.bytebuddy.implementation.bytecode.Throw;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
-
+import static com.duu.ojcommon.constant.RedisKeyConstant.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -60,6 +62,8 @@ public class QuestionController {
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private QuestionEsDao questionEsDao;
 
     private final static Gson GSON = new Gson();
 
@@ -99,6 +103,7 @@ public class QuestionController {
         question.setThumbNum(0);
         boolean result = questionService.save(question);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        questionEsDao.save(QuestionEsDTO.objToDto(question));
         long newQuestionId = question.getId();
         return ResultUtils.success(newQuestionId);
     }
@@ -125,7 +130,12 @@ public class QuestionController {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         boolean b = questionService.removeById(id);
-        return ResultUtils.success(b);
+        ThrowUtils.throwIf(!b, ErrorCode.OPERATION_ERROR);
+        //删除缓存
+        stringRedisTemplate.delete(QUESTION_ID+id);
+        //删除ES
+        questionEsDao.delete(QuestionEsDTO.objToDto(oldQuestion));
+        return ResultUtils.success(true);
     }
 
     /**
@@ -162,7 +172,8 @@ public class QuestionController {
         ThrowUtils.throwIf(oldQuestion == null, ErrorCode.NOT_FOUND_ERROR);
         boolean result = questionService.updateById(question);
         ThrowUtils.throwIf(!result, new BusinessException(ErrorCode.OPERATION_ERROR));
-        stringRedisTemplate.delete("questionId:"+id);
+        stringRedisTemplate.delete(QUESTION_ID+id);
+        questionEsDao.save(QuestionEsDTO.objToDto(question));
         return ResultUtils.success(true);
     }
 
@@ -346,7 +357,7 @@ public class QuestionController {
     }
     @PostMapping("/comment")
     @RequestLimit(period = 5,count = 1)
-    public BaseResponse<Long> QuestionComment(@RequestBody CommentAddRequest commentAddRequest,HttpServletRequest request){
+    public BaseResponse<Long> questionComment(@RequestBody CommentAddRequest commentAddRequest,HttpServletRequest request){
         Long questionId = commentAddRequest.getQuestionId();
         String content = commentAddRequest.getContent();
         User loginUser = userFeignClient.getLoginUser(request);
@@ -360,7 +371,7 @@ public class QuestionController {
         return ResultUtils.success(commentId);
     }
     @GetMapping("/comment/delete")
-    public BaseResponse<Boolean> DeleteComment(@RequestParam Long id,HttpServletRequest request){
+    public BaseResponse<Boolean> deleteComment(@RequestParam Long id,HttpServletRequest request){
         User loginUser = userFeignClient.getLoginUser(request);
         Comment comment = commentService.getById(id);
         if (comment == null) {
@@ -379,7 +390,7 @@ public class QuestionController {
     }
     @PostMapping("/comment_reply")
     @RequestLimit(period = 5,count = 1)
-    public BaseResponse<Long> AddCommentReply(@RequestBody CommentReplyAddRequest commentReplyAddRequest,HttpServletRequest request){
+    public BaseResponse<Long> addCommentReply(@RequestBody CommentReplyAddRequest commentReplyAddRequest,HttpServletRequest request){
         User loginUser = userFeignClient.getLoginUser(request);
         Long commentId = commentReplyAddRequest.getCommentId();
         String content = commentReplyAddRequest.getContent();
@@ -393,7 +404,7 @@ public class QuestionController {
         return ResultUtils.success(commentReplyId);
     }
     @GetMapping("/comment_reply/delete")
-    public BaseResponse<Boolean> DeleteCommentReply(@RequestParam Long id,HttpServletRequest request){
+    public BaseResponse<Boolean> deleteCommentReply(@RequestParam Long id,HttpServletRequest request){
         User loginUser = userFeignClient.getLoginUser(request);
         CommentReply commentReply = commentReplyService.getById(id);
         if (commentReply == null) {
@@ -417,13 +428,21 @@ public class QuestionController {
     }
 
     @GetMapping("/comment/like")
-    public BaseResponse<Boolean> CommentLike(@RequestParam Long id,HttpServletRequest request){
+    public BaseResponse<Boolean> commentLike(@RequestParam Long id,HttpServletRequest request){
         User loginUser = userFeignClient.getLoginUser(request);
         return ResultUtils.success(commentLikeService.commentLike(id,loginUser));
     }
     @GetMapping("/comment/dislike")
-    public BaseResponse<Boolean> CommentDislike(@RequestParam Long id,HttpServletRequest request){
+    public BaseResponse<Boolean> commentDislike(@RequestParam Long id,HttpServletRequest request){
         User loginUser = userFeignClient.getLoginUser(request);
         return ResultUtils.success(commentLikeService.commentDislike(id,loginUser));
+    }
+
+    @PostMapping("/search")
+    public BaseResponse<Page<QuestionVO>> SearchQuestionByEs(@RequestBody SearchQueryRequest searchQueryRequest){
+        if (searchQueryRequest.getSearchText()==null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"搜索内容不能为空");
+        }
+        return ResultUtils.success(questionService.searchQuestionByEs(searchQueryRequest));
     }
 }

@@ -6,11 +6,13 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.duu.ojmodel.model.dto.question.QuestionQueryRequest;
+import com.duu.ojmodel.model.dto.question.SearchQueryRequest;
 import com.duu.ojmodel.model.entity.Question;
 import com.duu.ojmodel.model.entity.User;
 import com.duu.ojmodel.model.vo.QuestionVO;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
 * @author duu
@@ -55,5 +57,7 @@ public interface QuestionService extends IService<Question> {
     Page<QuestionVO> getQuestionVOPage(Page<Question> questionPage, HttpServletRequest request);
 
     Question getQuestionByRedis(Long questionId);
+
+    Page<QuestionVO> searchQuestionByEs(SearchQueryRequest searchQueryRequest);
 
 }

@@ -1,12 +1,8 @@
-package com.duu.ojquestionservice.task;
+package com.duu.ojquestionservice.job;
 
-import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.duu.ojmodel.model.entity.CommentLike;
-import com.duu.ojmodel.model.entity.Question;
 import com.duu.ojquestionservice.service.CommentLikeService;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -22,7 +18,7 @@ import java.util.Set;
  * @from ：https://github.com/0oHo0
  **/
 @Component
-public class LikeTask {
+public class IncrementalSyncLikeToRedis {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
     @Resource

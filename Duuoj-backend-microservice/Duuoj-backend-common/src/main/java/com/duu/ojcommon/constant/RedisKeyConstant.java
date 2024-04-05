@@ -17,4 +17,6 @@ public interface RedisKeyConstant {
     String IP = "ip";
 
     String SESSION_ID = "sessionId";
+
+    String QUESTION_ID="questionId:";
 }

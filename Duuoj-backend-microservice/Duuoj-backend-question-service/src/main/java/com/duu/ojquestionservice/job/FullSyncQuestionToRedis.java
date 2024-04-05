@@ -1,6 +1,5 @@
-package com.duu.ojquestionservice.task;
+package com.duu.ojquestionservice.job;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.duu.ojmodel.model.entity.Question;
@@ -19,7 +18,7 @@ import java.util.List;
  * @from ：https://github.com/0oHo0
  **/
 @Component
-public class QuestionTask {
+public class FullSyncQuestionToRedis {
     @Resource
     private QuestionService questionService;
     @Resource

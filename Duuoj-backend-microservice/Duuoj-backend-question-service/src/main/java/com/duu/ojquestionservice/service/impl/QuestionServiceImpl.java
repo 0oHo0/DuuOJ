@@ -10,7 +10,9 @@ import com.duu.ojcommon.constant.CommonConstant;
 import com.duu.ojcommon.exception.BusinessException;
 import com.duu.ojcommon.exception.ThrowUtils;
 import com.duu.ojcommon.utils.SqlUtils;
+import com.duu.ojmodel.model.dto.question.QuestionEsDTO;
 import com.duu.ojmodel.model.dto.question.QuestionQueryRequest;
+import com.duu.ojmodel.model.dto.question.SearchQueryRequest;
 import com.duu.ojmodel.model.entity.Question;
 import com.duu.ojmodel.model.entity.User;
 import com.duu.ojmodel.model.vo.QuestionVO;
@@ -22,6 +24,20 @@ import net.bytebuddy.implementation.bytecode.Throw;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortOrder;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
@@ -49,6 +65,8 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    @Resource
+    private ElasticsearchRestTemplate elasticsearchRestTemplate;
     /**
      * 校验题目是否合法
      *
@@ -183,4 +201,48 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         return question;
     }
 
+    @Override
+    public Page<QuestionVO> searchQuestionByEs(SearchQueryRequest searchQueryRequest) {
+        String searchText = searchQueryRequest.getSearchText();
+        String type = searchQueryRequest.getType();
+        long current = searchQueryRequest.getCurrent();
+        long pageSize = searchQueryRequest.getPageSize();
+        String sortField = searchQueryRequest.getSortField();
+        String sortOrder = searchQueryRequest.getSortOrder();
+        BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
+        boolQueryBuilder.filter(QueryBuilders.termQuery("isDelete",0));
+        if (!StringUtils.isNotBlank(type)){
+            boolQueryBuilder.should(QueryBuilders.matchQuery("content", searchText));
+            boolQueryBuilder.should(QueryBuilders.matchQuery("title",searchText));
+            boolQueryBuilder.should(QueryBuilders.matchQuery("tags",searchText));
+        }else{
+            boolQueryBuilder.should(QueryBuilders.matchQuery(type,searchText));
+        }
+        boolQueryBuilder.minimumShouldMatch(1);
+        SortBuilder<?> sortBuilder = SortBuilders.scoreSort();
+        if (StringUtils.isNotBlank(sortField)) {
+            sortBuilder = SortBuilders.fieldSort(sortField);
+            sortBuilder.order(CommonConstant.SORT_ORDER_ASC.equals(sortOrder) ? SortOrder.ASC : SortOrder.DESC);
+        }
+        // 分页
+        Pageable pageable = PageRequest.of((int) current, (int) pageSize);
+        // 构造查询
+        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(boolQueryBuilder)
+                .withPageable(pageable)
+                .withSorts(sortBuilder)
+                .build();
+        SearchHits<QuestionEsDTO> searchHits = elasticsearchRestTemplate.search(searchQuery, QuestionEsDTO.class);
+        Page<QuestionVO> page = new Page<>(current,pageSize);
+        page.setTotal(searchHits.getTotalHits());
+        // 查出结果后，从 db 获取最新动态数据（比如点赞数）
+        if (searchHits.hasSearchHits()) {
+            List<SearchHit<QuestionEsDTO>> searchHitList = searchHits.getSearchHits();
+            List<Long> questionIdList = searchHitList.stream().map(searchHit->searchHit.getContent().getId())
+                    .collect(Collectors.toList());
+            List<Question> questionList = this.baseMapper.selectBatchIds(questionIdList);
+            List<QuestionVO> questionVOList = questionList.stream().map(QuestionVO::objToVo).collect(Collectors.toList());
+            page.setRecords(questionVOList);
+        }
+        return page;
+    }
 }
