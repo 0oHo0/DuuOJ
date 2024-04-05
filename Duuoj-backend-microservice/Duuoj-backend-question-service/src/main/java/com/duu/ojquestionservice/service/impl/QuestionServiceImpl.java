@@ -1,5 +1,7 @@
 package com.duu.ojquestionservice.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -16,9 +18,12 @@ import com.duu.ojmodel.model.vo.UserVO;
 import com.duu.ojquestionservice.mapper.QuestionMapper;
 import com.duu.ojquestionservice.service.QuestionService;
 import com.duu.ojserviceclient.service.UserFeignClient;
+import net.bytebuddy.implementation.bytecode.Throw;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -26,6 +31,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -40,6 +46,8 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
     @Resource
     private UserFeignClient userFeignClient;
 
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 校验题目是否合法
@@ -159,9 +167,20 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         return questionVOPage;
     }
 
+    @Override
+    public Question getQuestionByRedis(Long questionId) {
+        String key = "questionId:"+questionId.toString();
+        ValueOperations<String, String> operations = stringRedisTemplate.opsForValue();
+        String jsonStr = operations.get(key);
+        Question question;
+        if (jsonStr==null||jsonStr.isEmpty()){
+            question = this.getById(questionId);
+            jsonStr = JSONUtil.toJsonStr(question);
+            operations.set(key,jsonStr);
+            stringRedisTemplate.expire(key,1, TimeUnit.DAYS);
+        }
+        question = JSONUtil.toBean(jsonStr, Question.class);
+        return question;
+    }
 
 }
-
-
-
-

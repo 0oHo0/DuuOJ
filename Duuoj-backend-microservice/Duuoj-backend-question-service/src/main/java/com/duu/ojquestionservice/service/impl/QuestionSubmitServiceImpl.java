@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.duu.ojcommon.common.ErrorCode;
+import com.duu.ojcommon.constant.CommonConstant;
 import com.duu.ojcommon.exception.BusinessException;
 
+import com.duu.ojcommon.utils.SqlUtils;
 import com.duu.ojmodel.model.dto.questionsubmit.QuestionSubmitAddRequest;
 import com.duu.ojmodel.model.dto.questionsubmit.QuestionSubmitQueryRequest;
 
@@ -33,6 +35,8 @@ import javax.annotation.Resource;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+
+import static com.duu.ojcommon.constant.MqConstant.*;
 
 /**
 * @author duu
@@ -91,9 +95,9 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "数据插入失败");
         }
         Long questionSubmitId = questionSubmit.getId();
-        myMessageProducer.sendMessage("code_exchange","my_routingKey",String.valueOf(questionSubmitId));
+        myMessageProducer.sendMessage(CODE_EXCHANGE,CODE_ROUTING_KEY,String.valueOf(questionSubmitId));
 //        CompletableFuture.runAsync(() -> {
-////                judgeFeignClient.doJudge(questionSubmitId);
+//                judgeFeignClient.doJudge(questionSubmitId);
 //        });
         return questionSubmitId;
     }
@@ -115,8 +119,8 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         Integer status = questionSubmitQueryRequest.getStatus();
         Long questionId = questionSubmitQueryRequest.getQuestionId();
         Long userId = questionSubmitQueryRequest.getUserId();
-//        String sortField = questionSubmitQueryRequest.getSortField();
-//        String sortOrder = questionSubmitQueryRequest.getSortOrder();
+        String sortField = questionSubmitQueryRequest.getSortField();
+        String sortOrder = questionSubmitQueryRequest.getSortOrder();
 
         // 拼接查询条件
         queryWrapper.eq(StringUtils.isNotBlank(language), "language", language);
@@ -124,8 +128,8 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         queryWrapper.eq(ObjectUtils.isNotEmpty(questionId), "questionId", questionId);
         queryWrapper.eq(QuestionSubmitStatusEnum.getEnumByValue(status) != null, "status", status);
         queryWrapper.eq("isDelete", false);
-//        queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
-//                sortField);
+        queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
+                sortField);
         return queryWrapper;
     }
 

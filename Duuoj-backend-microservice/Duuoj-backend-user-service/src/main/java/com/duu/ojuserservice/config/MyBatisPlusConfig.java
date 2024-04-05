@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Configuration;
  * MyBatis Plus 配置
  *
  */
-@Configuration
 @MapperScan("com.duu.*.mapper")
 public class MyBatisPlusConfig {
 

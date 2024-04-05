@@ -18,7 +18,6 @@ import javax.annotation.Resource;
  * @from ：https://github.com/0oHo0
  **/
 @RestController
-@RequestMapping("/")
 public class CodeController {
 
     @Resource

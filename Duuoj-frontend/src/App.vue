@@ -1,6 +1,11 @@
 <template>
   <div id="app">
-    <template v-if="route.path.startsWith('/user')">
+    <template
+      v-if="
+        route.path.startsWith('/user/login') ||
+        route.path.startsWith('/user/register')
+      "
+    >
       <router-view />
     </template>
     <template v-else>
@@ -26,6 +31,7 @@ const route = useRoute();
 const doInit = () => {
   console.log("hello 欢迎来到我的项目");
 };
+// eslint-disable-next-line @typescript-eslint/ban-types
 
 onMounted(() => {
   doInit();

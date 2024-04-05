@@ -1,8 +1,10 @@
 package com.duu.ojquestionservice.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import com.duu.ojcommon.annotation.AuthCheck;
+import com.duu.ojcommon.annotation.RequestLimit;
 import com.duu.ojcommon.common.BaseResponse;
 import com.duu.ojcommon.common.DeleteRequest;
 import com.duu.ojcommon.common.ErrorCode;
@@ -13,17 +15,17 @@ import com.duu.ojcommon.exception.ThrowUtils;
 import com.duu.ojmodel.model.dto.question.*;
 import com.duu.ojmodel.model.dto.questionsubmit.QuestionSubmitAddRequest;
 import com.duu.ojmodel.model.dto.questionsubmit.QuestionSubmitQueryRequest;
-import com.duu.ojmodel.model.entity.Question;
-import com.duu.ojmodel.model.entity.QuestionSubmit;
-import com.duu.ojmodel.model.entity.User;
+import com.duu.ojmodel.model.entity.*;
+import com.duu.ojmodel.model.vo.CommentVO;
 import com.duu.ojmodel.model.vo.QuestionSubmitVO;
 import com.duu.ojmodel.model.vo.QuestionVO;
-import com.duu.ojquestionservice.service.QuestionService;
-import com.duu.ojquestionservice.service.QuestionSubmitService;
+import com.duu.ojquestionservice.service.*;
 import com.duu.ojserviceclient.service.UserFeignClient;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
+import net.bytebuddy.implementation.bytecode.Throw;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -32,7 +34,6 @@ import java.util.List;
 
 /**
  * 题目接口
- *
  */
 @RestController
 @RequestMapping("/")
@@ -48,6 +49,17 @@ public class QuestionController {
     @Resource
     private UserFeignClient userFeignClient;
 
+    @Resource
+    private CommentService commentService;
+
+    @Resource
+    private CommentReplyService commentReplyService;
+
+    @Resource
+    private CommentLikeService commentLikeService;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     private final static Gson GSON = new Gson();
 
@@ -61,7 +73,8 @@ public class QuestionController {
      * @return
      */
     @PostMapping("/add")
-    public BaseResponse<Long> addQuestion(@RequestBody QuestionAddRequest questionAddRequest, HttpServletRequest request) {
+    public BaseResponse<Long> addQuestion(@RequestBody QuestionAddRequest questionAddRequest,
+                                          HttpServletRequest request) {
         if (questionAddRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -148,7 +161,9 @@ public class QuestionController {
         Question oldQuestion = questionService.getById(id);
         ThrowUtils.throwIf(oldQuestion == null, ErrorCode.NOT_FOUND_ERROR);
         boolean result = questionService.updateById(question);
-        return ResultUtils.success(result);
+        ThrowUtils.throwIf(!result, new BusinessException(ErrorCode.OPERATION_ERROR));
+        stringRedisTemplate.delete("questionId:"+id);
+        return ResultUtils.success(true);
     }
 
     /**
@@ -162,7 +177,7 @@ public class QuestionController {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        Question question = questionService.getById(id);
+        Question question = questionService.getQuestionByRedis(id);
         if (question == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
@@ -185,7 +200,7 @@ public class QuestionController {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        Question question = questionService.getById(id);
+        Question question = questionService.getQuestionByRedis(id);
         if (question == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
@@ -201,7 +216,7 @@ public class QuestionController {
      */
     @PostMapping("/list/page/vo")
     public BaseResponse<Page<QuestionVO>> listQuestionVOByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
-            HttpServletRequest request) {
+                                                               HttpServletRequest request) {
         long current = questionQueryRequest.getCurrent();
         long size = questionQueryRequest.getPageSize();
         // 限制爬虫
@@ -220,7 +235,7 @@ public class QuestionController {
      */
     @PostMapping("/my/list/page/vo")
     public BaseResponse<Page<QuestionVO>> listMyQuestionVOByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
-            HttpServletRequest request) {
+                                                                 HttpServletRequest request) {
         if (questionQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -245,7 +260,7 @@ public class QuestionController {
     @PostMapping("/list/page")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<Question>> listQuestionByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
-                                                   HttpServletRequest request) {
+                                                           HttpServletRequest request) {
         long current = questionQueryRequest.getCurrent();
         long size = questionQueryRequest.getPageSize();
         Page<Question> questionPage = questionService.page(new Page<>(current, size),
@@ -263,7 +278,8 @@ public class QuestionController {
      * @return
      */
     @PostMapping("/edit")
-    public BaseResponse<Boolean> editQuestion(@RequestBody QuestionEditRequest questionEditRequest, HttpServletRequest request) {
+    public BaseResponse<Boolean> editQuestion(@RequestBody QuestionEditRequest questionEditRequest,
+                                              HttpServletRequest request) {
         if (questionEditRequest == null || questionEditRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -296,6 +312,7 @@ public class QuestionController {
         return ResultUtils.success(result);
     }
 
+    @RequestLimit(period = 1, count = 1)
     @PostMapping("/question_submit/do")
     public BaseResponse<Long> doQuestionSubmit(@RequestBody QuestionSubmitAddRequest questionSubmitAddRequest,
                                                HttpServletRequest request) {
@@ -327,5 +344,86 @@ public class QuestionController {
         // 返回脱敏信息
         return ResultUtils.success(questionSubmitService.getQuestionSubmitVOPage(questionSubmitPage, loginUser));
     }
+    @PostMapping("/comment")
+    @RequestLimit(period = 5,count = 1)
+    public BaseResponse<Long> QuestionComment(@RequestBody CommentAddRequest commentAddRequest,HttpServletRequest request){
+        Long questionId = commentAddRequest.getQuestionId();
+        String content = commentAddRequest.getContent();
+        User loginUser = userFeignClient.getLoginUser(request);
+        Comment comment = new Comment();
+        comment.setQuestionId(questionId);
+        comment.setUserId(loginUser.getId());
+        comment.setContent(content);
+        boolean save = commentService.save(comment);
+        ThrowUtils.throwIf(!save,ErrorCode.OPERATION_ERROR,"评论失败");
+        Long commentId = comment.getId();
+        return ResultUtils.success(commentId);
+    }
+    @GetMapping("/comment/delete")
+    public BaseResponse<Boolean> DeleteComment(@RequestParam Long id,HttpServletRequest request){
+        User loginUser = userFeignClient.getLoginUser(request);
+        Comment comment = commentService.getById(id);
+        if (comment == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        if(!comment.getUserId().equals(loginUser.getId())&& !userFeignClient.isAdmin(loginUser)){
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR,"用户只可删除自己的评论");
+        }
+        boolean removeById = commentService.removeById(id);
+        ThrowUtils.throwIf(!removeById,ErrorCode.OPERATION_ERROR);
+        QueryWrapper<CommentReply> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("commentId",id);
+        boolean remove = commentReplyService.remove(queryWrapper);
+        ThrowUtils.throwIf(!remove,ErrorCode.OPERATION_ERROR);
+        return ResultUtils.success(true);
+    }
+    @PostMapping("/comment_reply")
+    @RequestLimit(period = 5,count = 1)
+    public BaseResponse<Long> AddCommentReply(@RequestBody CommentReplyAddRequest commentReplyAddRequest,HttpServletRequest request){
+        User loginUser = userFeignClient.getLoginUser(request);
+        Long commentId = commentReplyAddRequest.getCommentId();
+        String content = commentReplyAddRequest.getContent();
+        CommentReply commentReply = new CommentReply();
+        commentReply.setCommentId(commentId);
+        commentReply.setUserId(loginUser.getId());
+        commentReply.setContent(content);
+        boolean save = commentReplyService.save(commentReply);
+        ThrowUtils.throwIf(!save,ErrorCode.OPERATION_ERROR,"回复失败");
+        Long commentReplyId = commentReply.getId();
+        return ResultUtils.success(commentReplyId);
+    }
+    @GetMapping("/comment_reply/delete")
+    public BaseResponse<Boolean> DeleteCommentReply(@RequestParam Long id,HttpServletRequest request){
+        User loginUser = userFeignClient.getLoginUser(request);
+        CommentReply commentReply = commentReplyService.getById(id);
+        if (commentReply == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        if(!commentReply.getUserId().equals(loginUser.getId())&& !userFeignClient.isAdmin(loginUser)){
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR,"用户只可删除自己的回复");
+        }
+        boolean remove = commentReplyService.removeById(id);
+        ThrowUtils.throwIf(!remove,ErrorCode.OPERATION_ERROR);
+        return ResultUtils.success(true);
+    }
 
+    @PostMapping("/comment/list/page")
+    public BaseResponse<Page<CommentVO>> listQuestionCommentByPage(@RequestBody CommentQueryRequest commentQueryRequest,HttpServletRequest request){
+        long current = commentQueryRequest.getCurrent();
+        long size = commentQueryRequest.getPageSize();
+        User loginUser = userFeignClient.getLoginUser(request);
+        Page<Comment> commentPage = commentService.page(new Page<>(current, size), commentService.getQueryWrapper(commentQueryRequest));
+        return ResultUtils.success(commentService.getCommentVOPage(commentPage,loginUser));
+    }
+
+    @GetMapping("/comment/like")
+    public BaseResponse<Boolean> CommentLike(@RequestParam Long id,HttpServletRequest request){
+        User loginUser = userFeignClient.getLoginUser(request);
+        return ResultUtils.success(commentLikeService.commentLike(id,loginUser));
+    }
+    @GetMapping("/comment/dislike")
+    public BaseResponse<Boolean> CommentDislike(@RequestParam Long id,HttpServletRequest request){
+        User loginUser = userFeignClient.getLoginUser(request);
+        return ResultUtils.success(commentLikeService.commentDislike(id,loginUser));
+    }
 }

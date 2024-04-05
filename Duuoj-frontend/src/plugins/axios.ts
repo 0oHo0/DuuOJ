@@ -6,6 +6,9 @@ axios.defaults.withCredentials = true;
 axios.interceptors.request.use(
   function (config) {
     // Do something before request is sent
+    config.headers["Authorization"] = `${localStorage.getItem(
+      "Authorization"
+    )}`;
     return config;
   },
   function (error) {
@@ -17,7 +20,7 @@ axios.interceptors.request.use(
 // Add a response interceptor
 axios.interceptors.response.use(
   function (response) {
-    console.log("响应", response);
+    //console.log("响应", response);
     // Any status code that lie within the range of 2xx cause this function to trigger
     // Do something with response data
     return response;

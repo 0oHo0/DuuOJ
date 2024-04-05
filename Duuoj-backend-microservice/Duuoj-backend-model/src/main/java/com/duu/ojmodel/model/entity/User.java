@@ -62,6 +62,7 @@ public class User implements Serializable {
      */
     private String email;
 
+    private String age;
     /**
      * 状态:0-正常/1-注销/2-封号
      */

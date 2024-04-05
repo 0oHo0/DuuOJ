@@ -19,11 +19,20 @@ public class LoginUserVO implements Serializable {
      */
     private Long id;
 
+
     /**
      * 用户昵称
      */
     private String userName;
 
+    /**
+     * 账号
+     */
+    private String userAccount;
+    /**
+     * 性别 男 女
+     */
+    private String gender;
     /**
      * 用户头像
      */
@@ -38,7 +47,17 @@ public class LoginUserVO implements Serializable {
      * 用户角色：user/admin/ban
      */
     private String userRole;
+    /**
+     * 电话
+     */
+    private String phone;
 
+    /**
+     * 邮箱
+     */
+    private String email;
+
+    private String age;
     /**
      * 创建时间
      */
@@ -48,6 +67,10 @@ public class LoginUserVO implements Serializable {
      * 更新时间
      */
     private Date updateTime;
+    /**
+     * token
+     */
+    private String token;
 
     private static final long serialVersionUID = 1L;
 }

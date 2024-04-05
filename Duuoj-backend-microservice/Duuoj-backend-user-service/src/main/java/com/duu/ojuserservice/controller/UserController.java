@@ -1,5 +1,9 @@
 package com.duu.ojuserservice.controller;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import com.duu.ojcommon.annotation.AuthCheck;
@@ -10,22 +14,28 @@ import com.duu.ojcommon.common.ResultUtils;
 import com.duu.ojcommon.constant.UserConstant;
 import com.duu.ojcommon.exception.BusinessException;
 import com.duu.ojcommon.exception.ThrowUtils;
+import com.duu.ojcommon.utils.JwtUtils;
 import com.duu.ojmodel.model.dto.user.*;
 import com.duu.ojmodel.model.entity.User;
 import com.duu.ojmodel.model.vo.LoginUserVO;
 import com.duu.ojmodel.model.vo.UserVO;
+import com.duu.ojuserservice.manager.SessionManager;
 import com.duu.ojuserservice.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 用户接口
@@ -41,7 +51,8 @@ public class UserController {
     @Resource
     private UserService userService;
 
-
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     // region 登录相关
 
@@ -84,6 +95,17 @@ public class UserController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         LoginUserVO loginUserVO = userService.userLogin(userAccount, userPassword, request);
+        //授权jwt
+        String uuId = UUID.randomUUID().toString();
+        try {
+            String token = JwtUtils.getToken(uuId);
+            loginUserVO.setToken(token);
+            String jsonStr = JSONUtil.toJsonStr(loginUserVO);
+            stringRedisTemplate.opsForValue().set(uuId,jsonStr);
+            stringRedisTemplate.expire(uuId,60, TimeUnit.MINUTES);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
         return ResultUtils.success(loginUserVO);
     }
 

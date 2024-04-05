@@ -7,7 +7,6 @@ spring:
   # 默认 dev 环境
   profiles:
     active: dev
-  # 支持 swagger3
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
@@ -33,6 +32,10 @@ spring:
     port: 5672
     password: guest
     username: guest
+    listener:
+      simple:
+        #自动签收auto  手动 manual
+        acknowledge-mode: manual
   # Redis 配置
   redis:
     database: 1
@@ -59,6 +62,10 @@ server:
     session:
       cookie:
         max-age: 2592000
+        path: /
+        http-only: true
+        secure: true
+        same-site: none
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false

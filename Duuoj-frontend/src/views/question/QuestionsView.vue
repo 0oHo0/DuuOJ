@@ -20,7 +20,7 @@
         showTotal: true,
         pageSize: searchParams.pageSize,
         current: searchParams.current,
-        total,
+        // total,
       }"
       @page-change="onPageChange"
     >
@@ -32,11 +32,7 @@
         </a-space>
       </template>
       <template #acceptedRate="{ record }">
-        {{
-          `${
-            record.submitNum ? record.acceptedNum / record.submitNum : "0"
-          }% (${record.acceptedNum}/${record.submitNum})`
-        }}
+        {{ ((record.acceptedNum / record.submitNum) * 100).toFixed(1) }}%
       </template>
       <template #createTime="{ record }">
         {{ moment(record.createTime).format("YYYY-MM-DD") }}
@@ -71,7 +67,6 @@ const dataList = ref([]);
 const total = ref(0);
 const searchParams = ref<QuestionQueryRequest>({
   title: "",
-  tags: [],
   pageSize: 8,
   current: 1,
 });

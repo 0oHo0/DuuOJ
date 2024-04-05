@@ -18,9 +18,14 @@
         />
       </a-form-item>
       <a-form-item>
-        <a-button type="primary" html-type="submit" style="width: 120px">
-          登录
-        </a-button>
+        <a-space>
+          <a-button type="primary" html-type="submit" style="width: 120px">
+            登录
+          </a-button>
+          <a-button type="primary" @click="register" style="width: 120px">
+            注册
+          </a-button>
+        </a-space>
       </a-form-item>
     </a-form>
   </div>
@@ -50,8 +55,10 @@ const store = useStore();
  */
 const handleSubmit = async () => {
   const res = await UserControllerService.userLoginUsingPost(form);
+  console.log(res.data.token);
   // 登录成功，跳转到主页
   if (res.code === 0) {
+    localStorage.setItem("Authorization", res.data.token);
     await store.dispatch("user/getLoginUser");
     router.push({
       path: "/",
@@ -60,5 +67,11 @@ const handleSubmit = async () => {
   } else {
     message.error("登陆失败，" + res.message);
   }
+};
+const register = async () => {
+  router.push({
+    path: "/user/register",
+    replace: true,
+  });
 };
 </script>

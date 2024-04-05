@@ -56,7 +56,10 @@ server:
     session:
       cookie:
         max-age: 2592000
-        path: /api   # 增加这一行，将cookie种在同一个路径下
+        path: /
+        http-only: true
+        secure: true
+        same-site: none
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false

@@ -4,8 +4,15 @@ import ArcoVue from "@arco-design/web-vue";
 import "@arco-design/web-vue/dist/arco.css";
 import router from "./router";
 import store from "./store";
+import ElementPlus from "element-plus";
+import "element-plus/dist/index.css";
 import "@/plugins/axios";
 import "@/access";
 import "bytemd/dist/index.css";
 
-createApp(App).use(ArcoVue).use(store).use(router).mount("#app");
+createApp(App)
+  .use(ArcoVue)
+  .use(store)
+  .use(router)
+  .use(ElementPlus)
+  .mount("#app");

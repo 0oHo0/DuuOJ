@@ -34,7 +34,13 @@
       @page-change="onPageChange"
     >
       <template #judgeInfo="{ record }">
-        {{ JSON.stringify(record.judgeInfo) }}
+        {{ JSON.stringify(record.judgeInfo.message).replace(/"/g, "") }}
+      </template>
+      <template #memory="{ record }">
+        {{ JSON.stringify(record.judgeInfo.memory).replace(/"/g, "") }}
+      </template>
+      <template #time="{ record }">
+        {{ JSON.stringify(record.judgeInfo.time).replace(/"/g, "") }}ms
       </template>
       <template #createTime="{ record }">
         {{ moment(record.createTime).format("YYYY-MM-DD") }}
@@ -74,6 +80,17 @@ const loadData = async () => {
     }
   );
   if (res.code === 0) {
+    for (let i = 0; i < res.data.records.length; i++) {
+      if (res.data.records[i].status == 0) {
+        res.data.records[i].status = "待判题";
+      } else if (res.data.records[i].status == 1) {
+        res.data.records[i].status = "判题中";
+      } else if (res.data.records[i].status == 2) {
+        res.data.records[i].status = "已判题";
+      } else {
+        res.data.records[i].status = "判题失败";
+      }
+    }
     dataList.value = res.data.records;
     total.value = res.data.total;
   } else {
@@ -105,8 +122,16 @@ const columns = [
     dataIndex: "language",
   },
   {
-    title: "判题信息",
+    title: "状态",
     slotName: "judgeInfo",
+  },
+  {
+    title: "消耗内存",
+    slotName: "memory",
+  },
+  {
+    title: "执行时间",
+    slotName: "time",
   },
   {
     title: "判题状态",

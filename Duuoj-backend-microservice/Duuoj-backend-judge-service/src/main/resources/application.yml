@@ -33,6 +33,10 @@ spring:
     port: 5672
     password: guest
     username: guest
+    listener:
+      simple:
+        #自动签收auto  手动 manual
+        acknowledge-mode: manual
   # Redis 配置
   # todo 需替换配置，然后取消注释
   redis:
@@ -61,6 +65,7 @@ server:
     session:
       cookie:
         max-age: 2592000
+        path: /api
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false

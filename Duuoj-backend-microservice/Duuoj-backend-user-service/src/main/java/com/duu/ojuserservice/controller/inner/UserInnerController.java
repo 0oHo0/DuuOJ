@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.List;
 
@@ -33,5 +34,11 @@ public class UserInnerController implements UserFeignClient {
     @GetMapping("/get/ids")
     public List<User> listByIds(@RequestParam("idList") Collection<Long> idList) {
         return userService.listByIds(idList);
+    }
+
+    @Override
+    @GetMapping("/get/login")
+    public User getLoginUser(@RequestParam("request") HttpServletRequest request) {
+        return userService.getLoginUser(request);
     }
 }

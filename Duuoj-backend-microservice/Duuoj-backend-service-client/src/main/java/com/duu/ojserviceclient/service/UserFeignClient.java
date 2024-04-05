@@ -27,6 +27,9 @@ public interface UserFeignClient {
     @GetMapping("/get/ids")
     List<User> listByIds(@RequestParam("idList") Collection<Long> idList);
 
+//    @GetMapping("/get/login")
+//    User getLoginUser(@RequestParam("request") HttpServletRequest request);
+
     default UserVO getUserVO(User user) {
         if (user == null) {
             return null;
@@ -35,6 +38,7 @@ public interface UserFeignClient {
         BeanUtils.copyProperties(user, userVO);
         return userVO;
     }
+
     default User getLoginUser(HttpServletRequest request){
         // 先判断是否已登录
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
@@ -42,7 +46,6 @@ public interface UserFeignClient {
         if (currentUser == null || currentUser.getId() == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
-        // 可以考虑在这里做全局权限校验
         return currentUser;
     }
 

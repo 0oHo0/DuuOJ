@@ -13,7 +13,7 @@
         >
           <div class="title-bar">
             <img class="logo" src="../assets/oj-logo.svg" />
-            <div class="title">鱼 OJ</div>
+            <div class="title">DuuOJ</div>
           </div>
         </a-menu-item>
         <a-menu-item v-for="item in visibleRoutes" :key="item.path">
@@ -21,7 +21,19 @@
         </a-menu-item>
       </a-menu>
     </a-col>
-    <a-col flex="100px">
+    <a-col class="user" flex="200px">
+      <a-dropdown>
+        <template #content>
+          <a-doption @click="moveUserCenter">个人中心</a-doption>
+          <a-doption @click="logout">退出</a-doption>
+        </template>
+        <a-avatar trigger-type="mask">
+          <img alt="avatar" :src="store.state.user?.loginUser?.userAvatar" />
+          <template #trigger-icon>
+            <IconEdit />
+          </template>
+        </a-avatar>
+      </a-dropdown>
       <div>
         {{ store.state.user?.loginUser?.userName ?? "未登录" }}
       </div>
@@ -36,6 +48,8 @@ import { computed, ref } from "vue";
 import { useStore } from "vuex";
 import checkAccess from "@/access/checkAccess";
 import ACCESS_ENUM from "@/access/accessEnum";
+import { Notification } from "@arco-design/web-vue";
+import { UserControllerService } from "../../generated";
 
 const router = useRouter();
 const store = useStore();
@@ -68,7 +82,7 @@ console.log();
 
 setTimeout(() => {
   store.dispatch("user/getLoginUser", {
-    userName: "鱼皮管理员",
+    userName: "管理员",
     userRole: ACCESS_ENUM.ADMIN,
   });
 }, 3000);
@@ -77,6 +91,16 @@ const doMenuClick = (key: string) => {
   router.push({
     path: key,
   });
+};
+const moveUserCenter = () => {
+  router.push("/user/center");
+};
+const logout = async () => {
+  const res = await UserControllerService.userLogoutUsingPost();
+  if (res.date.code === 0) {
+    await router.push("/user/login");
+    Notification.info("用户登出成功");
+  }
 };
 </script>
 
@@ -93,5 +117,12 @@ const doMenuClick = (key: string) => {
 
 .logo {
   height: 48px;
+}
+
+.user {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  align-items: center;
 }
 </style>

@@ -32,7 +32,7 @@ const plugins = [
  * 给组件指定初始值
  */
 const props = withDefaults(defineProps<Props>(), {
-  value: () => "",
+  value: () => "public class Main{ public static void main(String args[]){ }}",
   mode: () => "split",
   handleChange: (v: string) => {
     console.log(v);

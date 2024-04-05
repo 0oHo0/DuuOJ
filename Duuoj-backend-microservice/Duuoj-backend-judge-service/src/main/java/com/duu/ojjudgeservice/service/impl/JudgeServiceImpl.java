@@ -96,6 +96,17 @@ public class JudgeServiceImpl implements JudgeService {
         if (!update) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "题目状态更新错误");
         }
+        Integer acceptedNum = question.getAcceptedNum();
+        if (judgeInfoResponse.getMessage().equals("成功")){
+            acceptedNum = acceptedNum+1;
+        }
+        Integer submitNum = question.getSubmitNum()+1;
+        question.setAcceptedNum(acceptedNum);
+        question.setSubmitNum(submitNum);
+        update = questionFeignClient.updateQuestionById(question);
+        if (!update) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "题目通过率更新失败");
+        }
 //        List<String> outputList1 = judgeCases.stream().map(JudgeCase::getOutput).collect(Collectors.toList());
 
         return questionSubmit;

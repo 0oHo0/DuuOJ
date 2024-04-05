@@ -11,6 +11,8 @@ import ManageQuestionView from "@/views/question/ManageQuestionView.vue";
 import QuestionsView from "@/views/question/QuestionsView.vue";
 import QuestionSubmitView from "@/views/question/QuestionSubmitView.vue";
 import ViewQuestionView from "@/views/question/ViewQuestionView.vue";
+import UserCenterView from "@/views/user/UserCenterView.vue";
+import UserInfoView from "@/views/user/UserInfoView.vue";
 
 export const routes: Array<RouteRecordRaw> = [
   {
@@ -34,14 +36,20 @@ export const routes: Array<RouteRecordRaw> = [
     },
   },
   {
-    path: "/questions",
+    path: "/",
     name: "浏览题目",
     component: QuestionsView,
+    meta: {
+      access: ACCESS_ENUM.USER,
+    },
   },
   {
     path: "/question_submit",
     name: "浏览题目提交",
     component: QuestionSubmitView,
+    meta: {
+      access: ACCESS_ENUM.USER,
+    },
   },
   {
     path: "/view/question/:id",
@@ -79,10 +87,29 @@ export const routes: Array<RouteRecordRaw> = [
     },
   },
   {
-    path: "/",
-    name: "主页",
-    component: QuestionsView,
+    path: "/user/center",
+    name: "个人中心",
+    component: UserCenterView,
+    meta: {
+      access: ACCESS_ENUM.USER,
+      hideInMenu: true,
+    },
+    children: [
+      {
+        path: "user_info",
+        name: "个人简介",
+        component: UserInfoView,
+      },
+    ],
   },
+  // {
+  //   path: "/",
+  //   name: "主页",
+  //   component: QuestionsView,
+  //   meta: {
+  //     access: ACCESS_ENUM.USER,
+  //   },
+  // },
   // {
   //   path: "/hide",
   //   name: "隐藏页面",

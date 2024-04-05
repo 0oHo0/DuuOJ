@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.duu.ojmodel.model.dto.question.QuestionQueryRequest;
 import com.duu.ojmodel.model.entity.Question;
+import com.duu.ojmodel.model.entity.User;
 import com.duu.ojmodel.model.vo.QuestionVO;
 
 import javax.servlet.http.HttpServletRequest;
@@ -52,5 +53,7 @@ public interface QuestionService extends IService<Question> {
      * @return
      */
     Page<QuestionVO> getQuestionVOPage(Page<Question> questionPage, HttpServletRequest request);
-    
+
+    Question getQuestionByRedis(Long questionId);
+
 }

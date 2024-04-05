@@ -1,7 +1,7 @@
 <template>
   <div id="viewQuestionView">
     <a-row :gutter="[24, 24]">
-      <a-col :md="12" :xs="24">
+      <a-col :md="12" :xs="36">
         <a-tabs default-active-key="question">
           <a-tab-pane key="question" title="题目">
             <a-card v-if="question" :title="question.title">
@@ -32,8 +32,12 @@
               </template>
             </a-card>
           </a-tab-pane>
-          <a-tab-pane key="comment" title="评论" disabled> 评论区</a-tab-pane>
-          <a-tab-pane key="answer" title="答案"> 暂时无法查看答案</a-tab-pane>
+          <a-tab-pane key="comment" title="评论">
+            <QuestionComment></QuestionComment>
+          </a-tab-pane>
+          <a-tab-pane key="answer" title="答案">
+            <Viewer :value="question?.answer" />
+          </a-tab-pane>
         </a-tabs>
       </a-col>
       <a-col :md="12" :xs="24">
@@ -79,6 +83,8 @@ import {
   QuestionSubmitAddRequest,
   QuestionVO,
 } from "../../../generated";
+import QuestionComment from "@/views/question/QuestionComment.vue";
+import { Editor, Viewer } from "@bytemd/vue-next";
 
 interface Props {
   id: string;
@@ -96,6 +102,7 @@ const loadData = async () => {
   );
   if (res.code === 0) {
     question.value = res.data;
+    console.log(question.value);
   } else {
     message.error("加载失败，" + res.message);
   }
@@ -103,9 +110,17 @@ const loadData = async () => {
 
 const form = ref<QuestionSubmitAddRequest>({
   language: "java",
-  code: "",
+  code:
+    "public class Main{\n" +
+    "    public static void main(String args[]){\n\n" +
+    "    }\n" +
+    "}",
 });
-
+const userOptions = {
+  position: "right",
+};
+const answerOptions = {};
+const list1 = ref([{ msg: "你好", contentType: 0 }]);
 /**
  * 提交代码
  */
@@ -124,7 +139,14 @@ const doSubmit = async () => {
     message.error("提交失败," + res.message);
   }
 };
-
+const inputText = ref("");
+const handleAdd = () => {
+  list1.value.push({
+    msg: inputText.value,
+    contentType: 1,
+  });
+  inputText.value = "";
+};
 /**
  * 页面加载时，请求数据
  */
@@ -138,12 +160,28 @@ const changeCode = (value: string) => {
 </script>
 
 <style>
+@import url("https://at.alicdn.com/t/c/font_4434434_2bpgagal1bj.css");
+
 #viewQuestionView {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
 #viewQuestionView .arco-space-horizontal .arco-space-item {
   margin-bottom: 0 !important;
+}
+
+.c1 {
+  width: 100%;
+  background: #eee;
+  margin-bottom: 10px;
+}
+
+.feedback-slot {
+  font-size: 20px;
+}
+
+.icon-slot {
+  margin-right: 8px;
 }
 </style>

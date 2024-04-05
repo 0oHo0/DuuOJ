@@ -1,17 +1,23 @@
 package com.duu.ojuserservice.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.duu.ojcommon.common.ErrorCode;
 import com.duu.ojcommon.constant.CommonConstant;
 import com.duu.ojcommon.exception.BusinessException;
+import com.duu.ojcommon.utils.JwtUtils;
 import com.duu.ojcommon.utils.SqlUtils;
 import com.duu.ojmodel.model.dto.user.UserQueryRequest;
 import com.duu.ojmodel.model.entity.User;
 import com.duu.ojmodel.model.enums.UserRoleEnum;
 import com.duu.ojmodel.model.vo.LoginUserVO;
 import com.duu.ojmodel.model.vo.UserVO;
+import com.duu.ojuserservice.manager.SessionManager;
 import com.duu.ojuserservice.mapper.UserMapper;
 import com.duu.ojuserservice.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -19,10 +25,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,6 +53,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * 盐值，混淆密码
      */
     private static final String SALT = "duu";
+
+    @Resource
+    private SessionManager sessionManager;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -107,7 +123,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户不存在或密码错误");
         }
         // 3. 记录用户的登录态
-        request.getSession().setAttribute(USER_LOGIN_STATE, user);
+        sessionManager.login(user,request);
+        //request.getSession().setAttribute(USER_LOGIN_STATE, user);
         return this.getLoginUserVO(user);
     }
 
@@ -122,14 +139,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public User getLoginUser(HttpServletRequest request) {
         // 先判断是否已登录
+        String token = request.getHeader("Authorization");
+        String authorization;
+        try {
+            authorization = JwtUtils.decode(token).getPayload("uuId").toString();
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+        String userVOStr = null;
+        if (authorization != null) {
+            userVOStr = stringRedisTemplate.opsForValue().get(authorization);
+        }
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
-        User currentUser = (User) userObj;
-        if (currentUser == null || currentUser.getId() == null) {
+        LoginUserVO currentUserVO = JSONUtil.toBean(userVOStr,LoginUserVO.class);
+        if (currentUserVO == null || currentUserVO.getId() == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
         // 从数据库查询（追求性能的话可以注释，直接走缓存）
-        long userId = currentUser.getId();
-        currentUser = this.getById(userId);
+        long userId = currentUserVO.getId();
+        User currentUser = this.getById(userId);
         if (currentUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
@@ -184,8 +212,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (request.getSession().getAttribute(USER_LOGIN_STATE) == null) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
         }
-        // 移除登录态
-        request.getSession().removeAttribute(USER_LOGIN_STATE);
+        // 移除登录态(单点登录)
+        sessionManager.logout(request);
+        String token = request.getHeader("Authorization");
+        String authorization;
+        try {
+            authorization = JwtUtils.decode(token).getPayload("uuId").toString();
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+        stringRedisTemplate.delete(authorization);
+        //request.getSession().removeAttribute(USER_LOGIN_STATE);
         return true;
     }
 

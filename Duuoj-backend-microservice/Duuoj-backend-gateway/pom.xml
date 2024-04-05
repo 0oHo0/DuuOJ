@@ -33,6 +33,11 @@
             <version>4.3.0</version>
         </dependency>
         <dependency>
+            <groupId>com.duu</groupId>
+            <artifactId>Duuoj-backend-common</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
@@ -56,7 +61,6 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
     <build>
         <plugins>
             <plugin>
