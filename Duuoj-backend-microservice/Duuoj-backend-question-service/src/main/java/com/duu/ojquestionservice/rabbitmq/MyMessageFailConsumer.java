@@ -17,7 +17,7 @@ import javax.annotation.Resource;
 
 /**
  * @author : duu
- * @data : 2024/3/10
+ * @date : 2024/3/10
  * @from ：https://github.com/0oHo0
  **/
 @Component

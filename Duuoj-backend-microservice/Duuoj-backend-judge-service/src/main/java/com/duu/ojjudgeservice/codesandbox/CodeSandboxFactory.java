@@ -7,7 +7,7 @@ import com.duu.ojjudgeservice.codesandbox.impl.ThirdPartyCodeSandbox;
 
 /**
  * @author : duu
- * @data : 2023/12/13
+ * @date : 2023/12/13
  * @from ：https://github.com/0oHo0
  **/
 public class CodeSandboxFactory {

@@ -52,10 +52,8 @@
               :style="{ width: '320px' }"
               placeholder="选择编程语言"
             >
-              <a-option>java</a-option>
               <a-option>cpp</a-option>
-              <a-option>go</a-option>
-              <a-option>html</a-option>
+              <a-option>java</a-option>
             </a-select>
           </a-form-item>
         </a-form>
@@ -109,11 +107,15 @@ const loadData = async () => {
 };
 
 const form = ref<QuestionSubmitAddRequest>({
-  language: "java",
+  language: "cpp",
   code:
-    "public class Main{\n" +
-    "    public static void main(String args[]){\n\n" +
-    "    }\n" +
+    "#include <iostream>\n" +
+    "#include<string.h>\n" +
+    "using namespace std;\n" +
+    "//自行处理输入字符串转int \n" +
+    "int main(int argc, char* argv[])\n" +
+    "{\n\n" +
+    "    return 0;\n" +
     "}",
 });
 const userOptions = {

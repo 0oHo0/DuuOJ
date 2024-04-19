@@ -7,6 +7,7 @@ import type { JudgeConfig } from './JudgeConfig';
 import type { UserVO } from './UserVO';
 
 export type QuestionVO = {
+    status?: number;
     acceptedNum?: number;
     content?: string;
     answer?: string;

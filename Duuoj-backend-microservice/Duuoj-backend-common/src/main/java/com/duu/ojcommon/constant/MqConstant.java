@@ -2,7 +2,7 @@ package com.duu.ojcommon.constant;
 
 /**
  * @author : duu
- * @data : 2024/3/13
+ * @date : 2024/3/13
  * @from ：https://github.com/0oHo0
  * 消息队列
  **/

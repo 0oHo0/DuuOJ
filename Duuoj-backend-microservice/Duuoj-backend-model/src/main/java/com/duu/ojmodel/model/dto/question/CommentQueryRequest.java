@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 /**
  * @author : duu
- * @data : 2024/3/16
+ * @date : 2024/3/16
  * @from ：https://github.com/0oHo0
  **/
 @EqualsAndHashCode(callSuper = true)

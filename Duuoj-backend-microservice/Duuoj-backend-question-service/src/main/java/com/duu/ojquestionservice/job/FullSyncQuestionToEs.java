@@ -6,6 +6,7 @@ import com.duu.ojmodel.model.entity.Question;
 import com.duu.ojquestionservice.dao.QuestionEsDao;
 import com.duu.ojquestionservice.service.QuestionService;
 import javafx.collections.FXCollections;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.apache.commons.collections4.CollectionUtils;
@@ -18,10 +19,11 @@ import java.util.stream.Collectors;
 
 /**
  * @author : duu
- * @data : 2024/3/11
+ * @date : 2024/3/11
  * @from ：https://github.com/0oHo0
  **/
 @Component
+@Slf4j
 public class FullSyncQuestionToEs implements CommandLineRunner {
     @Resource
     private QuestionService questionService;
@@ -31,7 +33,7 @@ public class FullSyncQuestionToEs implements CommandLineRunner {
     @Override
     public void run(String... args){
         List<Question> questionList = questionService.list();
-        if (CollectionUtils.isEmpty(questionList)) {
+        if (questionList == null || CollectionUtils.isEmpty(questionList)) {
             return;
         }
         List<QuestionEsDTO> questionEsDTOList =
@@ -39,6 +41,7 @@ public class FullSyncQuestionToEs implements CommandLineRunner {
         try {
             questionEsDao.saveAll(questionEsDTOList);
         } catch (Exception e) {
+            log.error("Es同步失败");
             e.printStackTrace();
         }
     }

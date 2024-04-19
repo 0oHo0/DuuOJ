@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * @author : duu
- * @data : 2023/12/13
+ * @date : 2023/12/13
  * @from ：https://github.com/0oHo0
  *    判题管理
  **/
@@ -24,6 +24,9 @@ public class JudgeManager {
         String language = judgeContext.getQuestionSubmit().getLanguage();
         JudgeStrategy judgeStrategy = new DefaultStrategy();
         if (language.equals(QuestionSubmitLanguageEnum.JAVA.getValue())){
+            judgeStrategy = new JavaStrategy();
+        }else if (language.equals(QuestionSubmitLanguageEnum.CPLUSPLUS.getValue()))
+        {
             judgeStrategy = new JavaStrategy();
         }
         return judgeStrategy.doJudge(judgeContext);

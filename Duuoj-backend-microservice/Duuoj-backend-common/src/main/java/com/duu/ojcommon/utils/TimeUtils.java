@@ -5,7 +5,7 @@ import java.util.Date;
 
 /**
  * @author : duu
- * @data : 2024/3/18
+ * @date : 2024/3/18
  * @from ：https://github.com/0oHo0
  **/
 public class TimeUtils {

@@ -9,6 +9,7 @@ import type { BaseResponse_Page_Question_ } from '../models/BaseResponse_Page_Qu
 import type { BaseResponse_Page_QuestionSubmitVO_ } from '../models/BaseResponse_Page_QuestionSubmitVO_';
 import type { BaseResponse_Page_QuestionVO_ } from '../models/BaseResponse_Page_QuestionVO_';
 import type { BaseResponse_Question_ } from '../models/BaseResponse_Question_';
+import type { BaseResponse_QuestionStatisticsResponse_ } from '../models/BaseResponse_QuestionStatisticsResponse_';
 import type { BaseResponse_QuestionVO_ } from '../models/BaseResponse_QuestionVO_';
 import type { CommentAddRequest } from '../models/CommentAddRequest';
 import type { CommentQueryRequest } from '../models/CommentQueryRequest';
@@ -20,6 +21,7 @@ import type { QuestionQueryRequest } from '../models/QuestionQueryRequest';
 import type { QuestionSubmitAddRequest } from '../models/QuestionSubmitAddRequest';
 import type { QuestionSubmitQueryRequest } from '../models/QuestionSubmitQueryRequest';
 import type { QuestionUpdateRequest } from '../models/QuestionUpdateRequest';
+import type { SearchQueryRequest } from '../models/SearchQueryRequest';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -50,7 +52,7 @@ questionAddRequest: QuestionAddRequest,
     }
 
     /**
-     * QuestionComment
+     * questionComment
      * @param commentAddRequest commentAddRequest
      * @returns BaseResponse_long_ OK
      * @returns any Created
@@ -72,7 +74,7 @@ commentAddRequest: CommentAddRequest,
     }
 
     /**
-     * DeleteComment
+     * deleteComment
      * @param id id
      * @returns BaseResponse_boolean_ OK
      * @throws ApiError
@@ -95,7 +97,7 @@ id: number,
     }
 
     /**
-     * CommentDislike
+     * commentDislike
      * @param id id
      * @returns BaseResponse_boolean_ OK
      * @throws ApiError
@@ -118,7 +120,7 @@ id: number,
     }
 
     /**
-     * CommentLike
+     * commentLike
      * @param id id
      * @returns BaseResponse_boolean_ OK
      * @throws ApiError
@@ -163,7 +165,7 @@ commentQueryRequest: CommentQueryRequest,
     }
 
     /**
-     * AddCommentReply
+     * addCommentReply
      * @param commentReplyAddRequest commentReplyAddRequest
      * @returns BaseResponse_long_ OK
      * @returns any Created
@@ -185,7 +187,7 @@ commentReplyAddRequest: CommentReplyAddRequest,
     }
 
     /**
-     * DeleteCommentReply
+     * deleteCommentReply
      * @param id id
      * @returns BaseResponse_boolean_ OK
      * @throws ApiError
@@ -364,6 +366,24 @@ questionQueryRequest: QuestionQueryRequest,
     }
 
     /**
+     * questionStatistics
+     * @returns BaseResponse_QuestionStatisticsResponse_ OK
+     * @returns any Created
+     * @throws ApiError
+     */
+    public static questionStatisticsUsingPost(): CancelablePromise<BaseResponse_QuestionStatisticsResponse_ | any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/question/progressCount',
+            errors: {
+                401: `Unauthorized`,
+                403: `Forbidden`,
+                404: `Not Found`,
+            },
+        });
+    }
+
+    /**
      * doQuestionSubmit
      * @param questionSubmitAddRequest questionSubmitAddRequest
      * @returns BaseResponse_long_ OK
@@ -399,6 +419,28 @@ questionSubmitQueryRequest: QuestionSubmitQueryRequest,
             method: 'POST',
             url: '/api/question/question_submit/list/page',
             body: questionSubmitQueryRequest,
+            errors: {
+                401: `Unauthorized`,
+                403: `Forbidden`,
+                404: `Not Found`,
+            },
+        });
+    }
+
+    /**
+     * SearchQuestionByEs
+     * @param searchQueryRequest searchQueryRequest
+     * @returns BaseResponse_Page_QuestionVO_ OK
+     * @returns any Created
+     * @throws ApiError
+     */
+    public static searchQuestionByEsUsingPost(
+searchQueryRequest: SearchQueryRequest,
+): CancelablePromise<BaseResponse_Page_QuestionVO_ | any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/question/search',
+            body: searchQueryRequest,
             errors: {
                 401: `Unauthorized`,
                 403: `Forbidden`,

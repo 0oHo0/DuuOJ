@@ -15,6 +15,7 @@ import com.duu.ojjudgeservice.strategy.JudgeContext;
 import com.duu.ojjudgeservice.strategy.JudgeManager;
 import com.duu.ojmodel.model.dto.question.JudgeCase;
 import com.duu.ojmodel.model.entity.*;
+import com.duu.ojmodel.model.enums.JudgeInfoMessageEnum;
 import com.duu.ojmodel.model.enums.QuestionSubmitStatusEnum;
 import com.duu.ojserviceclient.service.QuestionFeignClient;
 
@@ -27,7 +28,7 @@ import java.util.stream.Collectors;
 
 /**
  * @author : duu
- * @data : 2023/12/13
+ * @date : 2023/12/13
  * @from ：https://github.com/0oHo0
  **/
 @Service
@@ -73,8 +74,8 @@ public class JudgeServiceImpl implements JudgeService {
         ExecuteCodeRequest executeCodeRequest = ExecuteCodeRequest.builder().code(code)
                 .language(language).inputList(inputList).build();
 
-        Map<String, Object> executeCodeRequestMap = BeanUtil.beanToMap(executeCodeRequest);
-        String post = HttpUtil.post("localhost:8103/api/execute", executeCodeRequestMap);
+        String executeCodeRequestJson = JSONUtil.toJsonStr(executeCodeRequest);
+        String post = HttpUtil.post("localhost:8103/api/execute", executeCodeRequestJson);
         ExecuteCodeResponse executeCodeResponse = JSONUtil.toBean(post, ExecuteCodeResponse.class);
         //ExecuteCodeResponse executeCodeResponse = codeSandbox.executeCode(executeCodeRequest);
         List<String> outputList = executeCodeResponse.getOutputList();
@@ -90,14 +91,14 @@ public class JudgeServiceImpl implements JudgeService {
         JudgeInfo judgeInfoResponse = judgeManager.doJudge(judgeContext);
         String responseJsonStr = JSONUtil.toJsonStr(judgeInfoResponse);
         // 6）修改数据库中的判题结果
-        questionSubmit.setStatus(QuestionSubmitStatusEnum.SUCCEED.getValue());
+        questionSubmit.setStatus(QuestionSubmitStatusEnum.PASS.getValue());
         questionSubmit.setJudgeInfo(responseJsonStr);
         update = questionFeignClient.updateQuestionSubmitById(questionSubmit);
         if (!update) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "题目状态更新错误");
         }
         Integer acceptedNum = question.getAcceptedNum();
-        if (judgeInfoResponse.getMessage().equals("成功")){
+        if (judgeInfoResponse.getMessage().equals(JudgeInfoMessageEnum.ACCEPTED.getText())){
             acceptedNum = acceptedNum+1;
         }
         Integer submitNum = question.getSubmitNum()+1;
@@ -108,7 +109,6 @@ public class JudgeServiceImpl implements JudgeService {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "题目通过率更新失败");
         }
 //        List<String> outputList1 = judgeCases.stream().map(JudgeCase::getOutput).collect(Collectors.toList());
-
         return questionSubmit;
     }
 }

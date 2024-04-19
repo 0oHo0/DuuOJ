@@ -11,7 +11,7 @@ import javax.annotation.Resource;
 
 /**
  * @author : duu
- * @data : 2023/12/28
+ * @date : 2023/12/28
  * @from ：https://github.com/0oHo0
  **/
 @RestController

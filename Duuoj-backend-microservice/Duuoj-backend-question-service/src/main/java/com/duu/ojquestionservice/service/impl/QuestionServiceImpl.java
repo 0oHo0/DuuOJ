@@ -2,23 +2,33 @@ package com.duu.ojquestionservice.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.csp.sentinel.util.AssertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
+import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.duu.ojcommon.common.ErrorCode;
 import com.duu.ojcommon.constant.CommonConstant;
+import com.duu.ojcommon.constant.RedisKeyConstant;
 import com.duu.ojcommon.exception.BusinessException;
 import com.duu.ojcommon.exception.ThrowUtils;
 import com.duu.ojcommon.utils.SqlUtils;
 import com.duu.ojmodel.model.dto.question.QuestionEsDTO;
 import com.duu.ojmodel.model.dto.question.QuestionQueryRequest;
+import com.duu.ojmodel.model.dto.question.QuestionStatisticsResponse;
 import com.duu.ojmodel.model.dto.question.SearchQueryRequest;
 import com.duu.ojmodel.model.entity.Question;
+import com.duu.ojmodel.model.entity.QuestionSubmit;
 import com.duu.ojmodel.model.entity.User;
+import com.duu.ojmodel.model.enums.JudgeInfoMessageEnum;
+import com.duu.ojmodel.model.enums.QuestionSubmitStatusEnum;
 import com.duu.ojmodel.model.vo.QuestionVO;
 import com.duu.ojmodel.model.vo.UserVO;
 import com.duu.ojquestionservice.mapper.QuestionMapper;
+import com.duu.ojquestionservice.mapper.QuestionSubmitMapper;
 import com.duu.ojquestionservice.service.QuestionService;
+import com.duu.ojquestionservice.service.QuestionSubmitService;
 import com.duu.ojserviceclient.service.UserFeignClient;
 import net.bytebuddy.implementation.bytecode.Throw;
 import org.apache.commons.collections4.CollectionUtils;
@@ -49,6 +59,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author duu
@@ -58,6 +69,8 @@ import java.util.stream.Collectors;
 @Service
 public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         implements QuestionService {
+    @Resource
+    private QuestionSubmitMapper questionSubmitMapper;
 
     @Resource
     private UserFeignClient userFeignClient;
@@ -160,6 +173,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
 
     @Override
     public Page<QuestionVO> getQuestionVOPage(Page<Question> questionPage, HttpServletRequest request) {
+        User loginUser = userFeignClient.getLoginUser(request);
         List<Question> questionList = questionPage.getRecords();
         Page<QuestionVO> questionVOPage = new Page<>(questionPage.getCurrent(), questionPage.getSize(),
                 questionPage.getTotal());
@@ -170,9 +184,17 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         Set<Long> userIdSet = questionList.stream().map(Question::getUserId).collect(Collectors.toSet());
         Map<Long, List<User>> userIdUserListMap = userFeignClient.listByIds(userIdSet).stream()
                 .collect(Collectors.groupingBy(User::getId));
+        QueryWrapper<QuestionSubmit> submitQueryWrapper = new QueryWrapper<>();
+        submitQueryWrapper.eq("status", QuestionSubmitStatusEnum.PASS.getValue());
+        submitQueryWrapper.eq("userId", loginUser.getId());
+        Set<Long> passQuestionIdSet = questionSubmitMapper.selectList(submitQueryWrapper).stream()
+                .map(QuestionSubmit::getQuestionId).collect(Collectors.toSet());
         // 填充信息
         List<QuestionVO> questionVOList = questionList.stream().map(question -> {
             QuestionVO questionVO = QuestionVO.objToVo(question);
+            if (passQuestionIdSet.contains(question.getId())){
+                questionVO.setStatus(1); //已通过
+            }
             Long userId = question.getUserId();
             User user = null;
             if (userIdUserListMap.containsKey(userId)) {
@@ -205,6 +227,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
     public Page<QuestionVO> searchQuestionByEs(SearchQueryRequest searchQueryRequest) {
         String searchText = searchQueryRequest.getSearchText();
         String type = searchQueryRequest.getType();
+        List<String> tagList = searchQueryRequest.getTags();
         long current = searchQueryRequest.getCurrent();
         long pageSize = searchQueryRequest.getPageSize();
         String sortField = searchQueryRequest.getSortField();
@@ -214,22 +237,28 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         if (!StringUtils.isNotBlank(type)){
             boolQueryBuilder.should(QueryBuilders.matchQuery("content", searchText));
             boolQueryBuilder.should(QueryBuilders.matchQuery("title",searchText));
-            boolQueryBuilder.should(QueryBuilders.matchQuery("tags",searchText));
         }else{
             boolQueryBuilder.should(QueryBuilders.matchQuery(type,searchText));
         }
         boolQueryBuilder.minimumShouldMatch(1);
+        if (CollectionUtils.isNotEmpty(tagList)){
+            BoolQueryBuilder tagQueryBuilder = new BoolQueryBuilder();
+            for (String tag : tagList) {
+                tagQueryBuilder.should(QueryBuilders.termQuery("tags", tag));
+            }
+            boolQueryBuilder.filter(tagQueryBuilder);
+        }
         SortBuilder<?> sortBuilder = SortBuilders.scoreSort();
         if (StringUtils.isNotBlank(sortField)) {
             sortBuilder = SortBuilders.fieldSort(sortField);
             sortBuilder.order(CommonConstant.SORT_ORDER_ASC.equals(sortOrder) ? SortOrder.ASC : SortOrder.DESC);
         }
         // 分页
-        Pageable pageable = PageRequest.of((int) current, (int) pageSize);
+        Pageable pageable = PageRequest.of((int) current-1, (int) pageSize);
         // 构造查询
         NativeSearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(boolQueryBuilder)
                 .withPageable(pageable)
-                .withSorts(sortBuilder)
+       //         .withSorts(sortBuilder)
                 .build();
         SearchHits<QuestionEsDTO> searchHits = elasticsearchRestTemplate.search(searchQuery, QuestionEsDTO.class);
         Page<QuestionVO> page = new Page<>(current,pageSize);
@@ -244,5 +273,55 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
             page.setRecords(questionVOList);
         }
         return page;
+    }
+
+    @Override
+    public QuestionStatisticsResponse questionStatistics(Long id) {
+        String responseStr = stringRedisTemplate.opsForValue().get(RedisKeyConstant.QUESTION_STATISTICS_KEY+id);
+        if (StringUtils.isNotBlank(responseStr)){
+            return JSONUtil.toBean(responseStr, QuestionStatisticsResponse.class);
+        }
+        List<Question> toatalQuestionList = this.list();
+        int simpleTotalNum = 0;
+        int mediumTotalNum = 0;
+        int hardTotalNum = 0;
+        for (Question question : toatalQuestionList) {
+            if (question.getTags().contains("简单")){
+                simpleTotalNum++;
+            }else if (question.getTags().contains("中等")){
+                mediumTotalNum++;
+            }else {
+                hardTotalNum++;
+            }
+        }
+        QueryWrapper<QuestionSubmit> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userId", id);
+        queryWrapper.eq("status", QuestionSubmitStatusEnum.PASS.getValue());
+        Set<Long> passQuestionIdSet = questionSubmitMapper.selectList(queryWrapper).stream().map(QuestionSubmit::getQuestionId).collect(Collectors.toSet());
+        List<Question> passQuestionList = this.listByIds(passQuestionIdSet);
+        QuestionStatisticsResponse response = new QuestionStatisticsResponse();
+        int simpleAcceptedNum = 0;
+        int mediumAcceptedNum = 0;
+        int hardAcceptedNum = 0;
+        for (Question question : passQuestionList) {
+            if (question.getTags().contains("简单")){
+                simpleAcceptedNum++;
+            }else if (question.getTags().contains("中等")){
+                mediumAcceptedNum++;
+            }else {
+                hardAcceptedNum++;
+            }
+        }
+        response.setSimpleTotalNum(simpleTotalNum);
+        response.setSimpleAcceptedNum(simpleAcceptedNum);
+        response.setMediumTotalNum(mediumTotalNum);
+        response.setMediumAcceptedNum(mediumAcceptedNum);
+        response.setHardTotalNum(hardTotalNum);
+        response.setHardAcceptedNum(hardAcceptedNum);
+        response.setTotalNum(simpleTotalNum+mediumTotalNum+hardTotalNum);
+        response.setAcceptedNum(simpleAcceptedNum+mediumAcceptedNum+hardAcceptedNum);
+        stringRedisTemplate.opsForValue().set(RedisKeyConstant.QUESTION_STATISTICS_KEY+id,JSONUtil.toJsonStr(response));
+        stringRedisTemplate.expire(RedisKeyConstant.QUESTION_STATISTICS_KEY+id,15,TimeUnit.MINUTES);
+        return response;
     }
 }

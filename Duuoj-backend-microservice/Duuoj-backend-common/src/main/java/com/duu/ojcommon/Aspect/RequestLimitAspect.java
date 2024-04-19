@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author : duu
- * @data : 2024/3/7
+ * @date : 2024/3/7
  * @from ：https://github.com/0oHo0
  **/
 @Aspect

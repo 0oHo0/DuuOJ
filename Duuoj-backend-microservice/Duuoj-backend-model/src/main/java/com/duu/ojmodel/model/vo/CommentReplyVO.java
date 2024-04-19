@@ -7,7 +7,7 @@ import java.util.Date;
 
 /**
  * @author : duu
- * @data : 2024/3/19
+ * @date : 2024/3/19
  * @from ：https://github.com/0oHo0
  **/
 @Data

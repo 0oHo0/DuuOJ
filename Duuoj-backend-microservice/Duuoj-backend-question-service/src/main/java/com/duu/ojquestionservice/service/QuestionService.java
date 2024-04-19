@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.duu.ojmodel.model.dto.question.QuestionQueryRequest;
+import com.duu.ojmodel.model.dto.question.QuestionStatisticsResponse;
 import com.duu.ojmodel.model.dto.question.SearchQueryRequest;
 import com.duu.ojmodel.model.entity.Question;
 import com.duu.ojmodel.model.entity.User;
@@ -60,4 +61,5 @@ public interface QuestionService extends IService<Question> {
 
     Page<QuestionVO> searchQuestionByEs(SearchQueryRequest searchQueryRequest);
 
+    QuestionStatisticsResponse questionStatistics(Long id);
 }

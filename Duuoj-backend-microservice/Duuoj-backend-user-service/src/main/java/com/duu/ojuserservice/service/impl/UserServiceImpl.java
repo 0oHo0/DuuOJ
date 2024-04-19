@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -33,8 +34,11 @@ import org.springframework.util.DigestUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.duu.ojcommon.constant.UserConstant.USER_LOGIN_STATE;
@@ -124,6 +128,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         // 3. 记录用户的登录态
         sessionManager.login(user,request);
+        //4. 记录活跃度
+            //获得今天的日期
+        LocalDate today = LocalDate.now();
+            //整理成20240308的格式
+        String todayStr = today.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        stringRedisTemplate.opsForValue().setBit(todayStr, user.getId(), true);
+        stringRedisTemplate.expire(todayStr, 3, TimeUnit.DAYS);
         //request.getSession().setAttribute(USER_LOGIN_STATE, user);
         return this.getLoginUserVO(user);
     }
@@ -277,5 +288,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
         return queryWrapper;
+    }
+
+    /**
+     * 获取当天活跃用户数
+     *
+     * @return
+     */
+    @Override
+    public Long getTodayUserActive() {
+        //获得今天的日期
+        LocalDate today = LocalDate.now();
+        //整理成20240308的格式
+        String todayStr = today.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        return stringRedisTemplate.execute((RedisCallback<Long>) connection ->
+                connection.bitCount(todayStr.getBytes())
+        );
     }
 }

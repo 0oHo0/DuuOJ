@@ -298,4 +298,15 @@ public class UserController {
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
     }
+
+    /**
+     * 统计今日用户活跃数
+     *
+     * @param request
+     * @return
+     */
+    @GetMapping("/active")
+    public BaseResponse<Long> getTodayUserActive(HttpServletRequest request) {
+        return ResultUtils.success(userService.getTodayUserActive());
+    }
 }

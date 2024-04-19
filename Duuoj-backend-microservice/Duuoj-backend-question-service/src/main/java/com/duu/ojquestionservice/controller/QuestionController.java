@@ -172,7 +172,9 @@ public class QuestionController {
         ThrowUtils.throwIf(oldQuestion == null, ErrorCode.NOT_FOUND_ERROR);
         boolean result = questionService.updateById(question);
         ThrowUtils.throwIf(!result, new BusinessException(ErrorCode.OPERATION_ERROR));
+        //清除缓存
         stringRedisTemplate.delete(QUESTION_ID+id);
+        //保存进Es
         questionEsDao.save(QuestionEsDTO.objToDto(question));
         return ResultUtils.success(true);
     }
@@ -354,6 +356,12 @@ public class QuestionController {
         final User loginUser = userFeignClient.getLoginUser(request);
         // 返回脱敏信息
         return ResultUtils.success(questionSubmitService.getQuestionSubmitVOPage(questionSubmitPage, loginUser));
+    }
+
+    @PostMapping("/progressCount")
+    public BaseResponse<QuestionStatisticsResponse> questionStatistics(HttpServletRequest request){
+        User loginUser = userFeignClient.getLoginUser(request);
+        return ResultUtils.success(questionService.questionStatistics(loginUser.getId()));
     }
     @PostMapping("/comment")
     @RequestLimit(period = 5,count = 1)

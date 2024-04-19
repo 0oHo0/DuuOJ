@@ -14,7 +14,7 @@ import java.util.Map;
 
 /**
  * @author : duu
- * @data : 2024/3/8
+ * @date : 2024/3/8
  * @from ：https://github.com/0oHo0
  **/
 public class JwtUtils {

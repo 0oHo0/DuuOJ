@@ -3,7 +3,7 @@
 <a>
     <img src="https://img.shields.io/badge/Spring Boot-2.7.2-brightgreen.svg" alt="Spring Boot">
     <img src="https://img.shields.io/badge/MySQL-8.0.20-orange.svg" alt="MySQL">
-    <img src="https://img.shields.io/badge/Java-1.8.0__371-blue.svg" alt="Java">
+    <img src="https://img.shields.io/badge/Java-1.8-blue.svg" alt="Java">
     <img src="https://img.shields.io/badge/Redis-5.0.14-red.svg" alt="Redis">
     <img src="https://img.shields.io/badge/RabbitMQ-3.9.11-orange.svg" alt="RabbitMQ">
     <img src="https://img.shields.io/badge/MyBatis--Plus-3.5.2-blue.svg" alt="MyBatis-Plus">
@@ -11,8 +11,12 @@
     <img src="https://img.shields.io/badge/Gson-3.9.1-blue.svg" alt="Gson">
     <img src="https://img.shields.io/badge/Hutool-5.8.8-green.svg" alt="Hutool">
     <img src="https://img.shields.io/badge/MyBatis-2.2.2-yellow.svg" alt="MyBatis">
+     <img src="https://img.shields.io/badge/Elasticsearch-7.17.9-blue.svg" alt="Elasticsearch">
+     <img src="https://img.shields.io/badge/DuuRPC-0.0.1-green.svg" alt="DuuRPC">
 </a>
 </p>
+
+
 
 
 #    DuuOJ判题平台
@@ -28,13 +32,12 @@
    - 用户代码藏毒：写个木马文件、修改系统权限
    - 沙箱：隔离的、安全的环境，用户的代码不会影响到沙箱之外的系统的运行
    - 资源分配：限制用户程序的占用资源
-3. 判题规则
-   - 题目用例的比对，结果的验证
-4. 任务调度（消息队列执行判题）
+3. 任务调度（消息队列执行判题）
    - 服务器资源有限，用户要排队，按照顺序去依次执行判题
    - 使用死信队列处理失败判题
-5. 接口限流：使用Redis Zset结构配合滑动窗口思想削峰，并开发接口限流注解
-6. 缓存题目信息、评论与点赞，使用定时任务进行持久化与缓存预热
+4. 接口限流：使用Redis Zset结构配合滑动窗口思想削峰，并开发接口限流注解
+5. 缓存题目信息、评论与点赞，使用定时任务进行持久化与缓存预热
+6. 使用Elasticsearch对题目搜索进行优化
 7. 网关进行统一用户鉴权
 
 ##  项目功能
@@ -50,6 +53,7 @@
 2. 统计题目通过率
 3. 在线做题，提交代码（用户/管理）
 4. 对题目进行评论点赞
+5. Es优化题目搜索
 
 ### 用户模块
 
@@ -63,7 +67,7 @@
 
 ### 代码沙箱
 
-- 只负责接受代码和输入，运行代码，返回编译运行的结果，不用管用户提交的程序是否正确(不负责判题)
+只负责接受代码和输入，运行代码，返回编译运行的结果，不用管用户提交的程序是否正确(不负责判题)
 
 ##   项目业务流程
 
