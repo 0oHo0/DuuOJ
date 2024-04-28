@@ -14,6 +14,7 @@ import java.util.Set;
 
 /**
  * @author : duu
+ * @description : 异步将增加的点赞数持久化到数据库并清理缓存
  * @date : 2024/3/20
  * @from ：https://github.com/0oHo0
  **/

@@ -1,5 +1,6 @@
 package com.duu.ojuserservice.controller;
 
+import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.StrUtil;
@@ -95,14 +96,14 @@ public class UserController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         LoginUserVO loginUserVO = userService.userLogin(userAccount, userPassword, request);
+        //StpUtil.login(loginUserVO.getId());
         //授权jwt
         String uuId = UUID.randomUUID().toString();
         try {
             String token = JwtUtils.getToken(uuId);
             loginUserVO.setToken(token);
             String jsonStr = JSONUtil.toJsonStr(loginUserVO);
-            stringRedisTemplate.opsForValue().set(uuId,jsonStr);
-            stringRedisTemplate.expire(uuId,60, TimeUnit.MINUTES);
+            stringRedisTemplate.opsForValue().set(uuId,jsonStr,60, TimeUnit.MINUTES);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
@@ -123,6 +124,9 @@ public class UserController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         boolean result = userService.userLogout(request);
+//        if (StpUtil.isLogin()){
+//            StpUtil.logout();
+//        }
         return ResultUtils.success(result);
     }
 

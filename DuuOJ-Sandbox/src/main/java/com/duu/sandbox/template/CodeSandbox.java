@@ -1,4 +1,4 @@
-package com.duu.sandbox;
+package com.duu.sandbox.template;
 
 
 import com.duu.sandbox.model.ExecuteCodeRequest;

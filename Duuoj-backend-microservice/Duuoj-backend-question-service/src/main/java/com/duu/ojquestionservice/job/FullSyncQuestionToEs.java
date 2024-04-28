@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 public class FullSyncQuestionToEs implements CommandLineRunner {
     @Resource
     private QuestionService questionService;
+
     @Resource
     private QuestionEsDao questionEsDao;
 
@@ -41,8 +42,7 @@ public class FullSyncQuestionToEs implements CommandLineRunner {
         try {
             questionEsDao.saveAll(questionEsDTOList);
         } catch (Exception e) {
-            log.error("Es同步失败");
-            e.printStackTrace();
+            log.error("同步失败", e);
         }
     }
 }

@@ -3,6 +3,7 @@ package com.duu.sandbox.utils;
 import cn.hutool.core.util.StrUtil;
 import com.duu.sandbox.model.ExecuteMessage;
 
+import com.duu.sandbox.model.ExecuteMessage;
 import org.springframework.util.StopWatch;
 import org.apache.commons.lang3.StringUtils;
 
@@ -115,4 +116,56 @@ public class ProcessUtils {
         }
         return executeMessage;
     }
+    /**
+     * 执行交互式进程并获取信息
+     * @param runProcess
+     * @param input
+     * @return
+     */
+    public static ExecuteMessage getAcmProcessMessage(Process runProcess, String input) throws IOException {
+        ExecuteMessage executeMessage = new ExecuteMessage();
+
+        StringReader inputReader = new StringReader(input);
+        BufferedReader inputBufferedReader = new BufferedReader(inputReader);
+
+        //计时
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+
+        //输入（模拟控制台输入）
+        PrintWriter consoleInput = new PrintWriter(runProcess.getOutputStream());
+        String line;
+        while ((line = inputBufferedReader.readLine()) != null) {
+            consoleInput.println(line);
+            consoleInput.flush();
+        }
+        consoleInput.close();
+
+        //获取输出
+        BufferedReader userCodeOutput = new BufferedReader(new InputStreamReader(runProcess.getInputStream()));
+        List<String> outputList = new ArrayList<>();
+        String outputLine;
+        while ((outputLine = userCodeOutput.readLine()) != null) {
+            outputList.add(outputLine);
+        }
+        userCodeOutput.close();
+
+        //获取错误输出
+        BufferedReader errorOutput = new BufferedReader(new InputStreamReader(runProcess.getErrorStream()));
+        List<String> errorList = new ArrayList<>();
+        String errorLine;
+        while ((errorLine = errorOutput.readLine()) != null) {
+            errorList.add(errorLine);
+        }
+        errorOutput.close();
+
+        stopWatch.stop();
+        executeMessage.setTime(stopWatch.getLastTaskTimeMillis());
+        executeMessage.setMessage(StringUtils.join(outputList, "\n"));
+        executeMessage.setErrorMessage(StringUtils.join(errorList, "\n"));
+        runProcess.destroy();
+
+        return executeMessage;
+    }
+
 }

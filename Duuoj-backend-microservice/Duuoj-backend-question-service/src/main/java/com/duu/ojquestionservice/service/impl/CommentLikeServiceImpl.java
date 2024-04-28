@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.duu.ojcommon.common.ErrorCode;
+import com.duu.ojcommon.constant.RedisKeyConstant;
 import com.duu.ojcommon.exception.BusinessException;
 import com.duu.ojmodel.model.entity.CommentLike;
 import com.duu.ojmodel.model.entity.User;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -29,7 +31,7 @@ public class CommentLikeServiceImpl extends ServiceImpl<CommentLikeMapper, Comme
     StringRedisTemplate stringRedisTemplate;
     @Override
     public Boolean commentLike(Long id, User loginUser) {
-        String key = "CommentLike:"+id;
+        String key = RedisKeyConstant.COMMENT_LIKE+id;
         Long add = stringRedisTemplate.opsForSet().add(key, String.valueOf(loginUser.getId()));
         stringRedisTemplate.expire(key,3, TimeUnit.MINUTES);
         if (add == null) {
@@ -43,7 +45,7 @@ public class CommentLikeServiceImpl extends ServiceImpl<CommentLikeMapper, Comme
 
     @Override
     public Boolean commentDislike(Long id, User loginUser) {
-        String key = "CommentLike:"+id;
+        String key = RedisKeyConstant.COMMENT_LIKE+id;
         Long remove = stringRedisTemplate.opsForSet().remove(key, String.valueOf(loginUser.getId()));
         if (remove == null || remove<=0) {
             CommentLike commentLike = this.lambdaQuery().eq(CommentLike::getCommentId, id)
@@ -59,15 +61,15 @@ public class CommentLikeServiceImpl extends ServiceImpl<CommentLikeMapper, Comme
 
     @Override
     public Long countCommentLike(Long id) {
-        String key = "CommentLike:"+id;
-        Long redisNum = stringRedisTemplate.opsForSet().size(key);
+        String key = RedisKeyConstant.COMMENT_LIKE+id;
+        Long redisNum = Optional.ofNullable(stringRedisTemplate.opsForSet().size(key)).orElse(0L);
         Long sqlNum = this.lambdaQuery().eq(CommentLike::getCommentId, id).count();
         return redisNum+sqlNum;
     }
 
     @Override
     public Boolean checkLike(Long id, User loginUser) {
-        String key = "CommentLike:"+id;
+        String key = RedisKeyConstant.COMMENT_LIKE+id;
         Boolean member = stringRedisTemplate.opsForSet().isMember(key, String.valueOf(loginUser.getId()));
         if (Boolean.FALSE.equals(member)) {
             CommentLike commentLike = this.lambdaQuery().eq(CommentLike::getCommentId, id)

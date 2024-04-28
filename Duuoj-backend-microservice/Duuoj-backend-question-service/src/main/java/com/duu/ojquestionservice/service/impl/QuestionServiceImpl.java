@@ -1,6 +1,7 @@
 package com.duu.ojquestionservice.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.csp.sentinel.util.AssertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -34,11 +35,15 @@ import net.bytebuddy.implementation.bytecode.Throw;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
+import org.redisson.api.RBloomFilter;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -61,6 +66,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.duu.ojcommon.constant.RedisKeyConstant.GET_QUESTION_FILTER;
+import static jodd.util.ThreadUtil.sleep;
+
 /**
  * @author duu
  * @description 针对表【question(题目)】的数据库操作Service实现
@@ -80,6 +88,9 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
 
     @Resource
     private ElasticsearchRestTemplate elasticsearchRestTemplate;
+
+    @Resource
+    RedissonClient redissonClient;
     /**
      * 校验题目是否合法
      *
@@ -209,15 +220,32 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
 
     @Override
     public Question getQuestionByRedis(Long questionId) {
-        String key = "questionId:"+questionId.toString();
+        String key = RedisKeyConstant.QUESTION_ID+questionId.toString();
+        // 使用布隆过滤器解决缓存穿透
+        RBloomFilter<Object> filter = redissonClient.getBloomFilter(GET_QUESTION_FILTER);
+        if(!filter.contains(questionId)){
+            return null;
+        }
         ValueOperations<String, String> operations = stringRedisTemplate.opsForValue();
         String jsonStr = operations.get(key);
         Question question;
         if (jsonStr==null||jsonStr.isEmpty()){
-            question = this.getById(questionId);
-            jsonStr = JSONUtil.toJsonStr(question);
-            operations.set(key,jsonStr);
-            stringRedisTemplate.expire(key,1, TimeUnit.DAYS);
+            // 加互斥锁 解决缓存击穿
+            String lockKey = RedisKeyConstant.GET_QUESTION_LOCK+questionId.toString();
+            Boolean setIfAbsent = stringRedisTemplate.opsForValue().setIfAbsent(lockKey, "1", 5, TimeUnit.SECONDS);
+            if (BooleanUtil.isTrue(setIfAbsent)) {
+                question = this.getById(questionId);
+                jsonStr = JSONUtil.toJsonStr(question);
+                operations.set(key, jsonStr,1,TimeUnit.DAYS);
+                stringRedisTemplate.delete(lockKey);
+            }else {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                return getQuestionByRedis(questionId);
+            }
         }
         question = JSONUtil.toBean(jsonStr, Question.class);
         return question;

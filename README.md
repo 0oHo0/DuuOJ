@@ -23,11 +23,11 @@
 
 ##  项目介绍
 
-基于 Spring Boot + Spring Cloud Alibaba 微服务 + Docker + RabbitMQ + Vue 3 的 **编程算法题目在线评测系统** 
+基于 Spring Boot + Spring Cloud Alibaba 微服务 + Redis + MySQL + Docker + RabbitMQ + Elasticsearch + Vue 3 的 **编程算法题目在线评测系统** 
 
 ## 项目核心亮点 ⭐
 
-1. 权限校验：用户权限校验，配合Redis实现不同设备单点登录
+1. 权限校验：配合网关JWT用户权限校验，使用Redis实现不同设备单点登录
 2. 代码沙箱（安全沙箱）
    - 用户代码藏毒：写个木马文件、修改系统权限
    - 沙箱：隔离的、安全的环境，用户的代码不会影响到沙箱之外的系统的运行
@@ -35,10 +35,10 @@
 3. 任务调度（消息队列执行判题）
    - 服务器资源有限，用户要排队，按照顺序去依次执行判题
    - 使用死信队列处理失败判题
-4. 接口限流：使用Redis Zset结构配合滑动窗口思想削峰，并开发接口限流注解
-5. 缓存题目信息、评论与点赞，使用定时任务进行持久化与缓存预热
-6. 使用Elasticsearch对题目搜索进行优化
-7. 网关进行统一用户鉴权
+4. 接口限流：使用Redisson的RRateLimiter，根据用户ip限流，开发注解方便调用
+5. 缓存题目信息，使用定时任务进行持久化与缓存预热，解决缓存穿透、雪崩与击穿
+6. Redis bitmap结构实现站内日活跃度统计，减少内存占用
+7. 使用 Elasticsearch 配合 `ik_max_word`(存储)和`ik_max`(查询)两种分词器对题目搜索进行优化
 
 ##  项目功能
 
@@ -51,23 +51,36 @@
 
 1. 题目与提交列表增删改查
 2. 统计题目通过率
-3. 在线做题，提交代码（用户/管理）
-4. 对题目进行评论点赞
-5. Es优化题目搜索
+3. 在线做题，提交代码
+4. 对题目进行评论、点赞
+5. Elasticsearch优化题目搜索，提高搜索命中率
 
 ### 用户模块
 
 1. 注册登录
-2. 用户管理（管理员）
-3. 用户上传头像功能，使用阿里云对象存储OSS存储图片（不一定）
+2. 用户管理
+3. 个人信息管理
 
 ### 判题模块
 
-提交判题：检查运行结果
+- 向代码沙箱提交代码
+- 对沙箱返回结果使用策略模式执行判题
 
 ### 代码沙箱
 
-只负责接受代码和输入，运行代码，返回编译运行的结果，不用管用户提交的程序是否正确(不负责判题)
+- 支持Java、CPP两种语言运行环境
+
+- 代码执行支持本地ACM模式与Docker 参数输入模式
+- 使用字典树检查代码安全性
+- 统计代码用时
+
+> 只负责接受代码和输入，运行代码，返回编译运行的结果，不用管用户提交的程序是否正确(不负责判题)
+
+### 任务
+
+- 初始化Redis的Bloom过滤器
+- 同步题目信息至Elasticsearch、Redis（缓存预热）
+- `@Scheduled`定时任务在空闲时同步题目信息，保证缓存一致性
 
 ##   项目业务流程
 
@@ -85,12 +98,12 @@
 
 - Duuoj-backend-microservice  后端微服务项目
   - Duuoj-backend-common 公共类
-  - Duuoj-backend-gateway 项目网关  端口：8104
-  - Duuoj-backend-judge-service 判题服务   端口：8105
-  - Duuoj-backend-model  单体类  
-  - Duuoj-backend-question-service 题目服务   端口：8106
-  - Duuoj-backend-service-client  OpenFeign服务调用客户端
-  - Duuoj-backend-user-service 用户服务   端口：8108
+  - Duuoj-backend-gateway 项目网关
+  - Duuoj-backend-judge-service 判题服务
+  - Duuoj-backend-model  实体类  
+  - Duuoj-backend-question-service 题目服务
+  - Duuoj-backend-service-client  OpenFeign远程调用客户端
+  - Duuoj-backend-user-service 用户服务
   
 - Duuoj-frontend  前端项目
 

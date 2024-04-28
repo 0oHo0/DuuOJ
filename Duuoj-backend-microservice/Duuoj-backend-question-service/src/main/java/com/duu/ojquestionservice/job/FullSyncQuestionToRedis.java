@@ -3,8 +3,13 @@ package com.duu.ojquestionservice.job;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.duu.ojcommon.common.ErrorCode;
+import com.duu.ojcommon.exception.BusinessException;
+import com.duu.ojcommon.exception.ThrowUtils;
 import com.duu.ojmodel.model.entity.Question;
 import com.duu.ojquestionservice.service.QuestionService;
+import org.redisson.api.RBloomFilter;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -13,7 +18,9 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
+import static com.duu.ojcommon.constant.RedisKeyConstant.GET_QUESTION_FILTER;
 import static com.duu.ojcommon.constant.RedisKeyConstant.QUESTION_ID;
 
 /**
@@ -23,6 +30,7 @@ import static com.duu.ojcommon.constant.RedisKeyConstant.QUESTION_ID;
  **/
 @Component
 public class FullSyncQuestionToRedis {
+
     @Resource
     private QuestionService questionService;
     @Resource
@@ -36,9 +44,7 @@ public class FullSyncQuestionToRedis {
         questionList.forEach(iter->{
             String key=QUESTION_ID+iter.getId();
             String jsonStr = JSONUtil.toJsonStr(iter);
-            operations.set(key,jsonStr);
-            stringRedisTemplate.expire(key,60*60*24+ RandomUtil.randomInt(-60*3, 60*3), TimeUnit.SECONDS);
-
+            operations.set(key,jsonStr,60*60*24+ RandomUtil.randomInt(-60*3, 60*3), TimeUnit.SECONDS);
         });
     }
 }

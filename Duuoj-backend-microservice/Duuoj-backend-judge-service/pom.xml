@@ -33,6 +33,11 @@
         </dependency>
         <dependency>
             <groupId>com.duu</groupId>
+            <artifactId>Sandbox-SDK</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.duu</groupId>
             <artifactId>Duuoj-backend-model</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>

@@ -67,8 +67,6 @@ public class QuestionController {
 
     private final static Gson GSON = new Gson();
 
-    // region 增删改查
-
     /**
      * 创建
      *
@@ -325,14 +323,13 @@ public class QuestionController {
         return ResultUtils.success(result);
     }
 
-    @RequestLimit(period = 1, count = 1)
+    @RequestLimit(period = 10, count = 3)
     @PostMapping("/question_submit/do")
     public BaseResponse<Long> doQuestionSubmit(@RequestBody QuestionSubmitAddRequest questionSubmitAddRequest,
                                                HttpServletRequest request) {
         if (questionSubmitAddRequest == null || questionSubmitAddRequest.getQuestionId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        // 登录才能点赞
         final User loginUser = userFeignClient.getLoginUser(request);
         long questionSubmitId = questionSubmitService.doQuestionSubmit(questionSubmitAddRequest, loginUser);
         return ResultUtils.success(questionSubmitId);

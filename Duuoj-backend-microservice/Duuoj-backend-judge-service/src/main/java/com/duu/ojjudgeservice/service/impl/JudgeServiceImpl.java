@@ -19,6 +19,10 @@ import com.duu.ojmodel.model.enums.JudgeInfoMessageEnum;
 import com.duu.ojmodel.model.enums.QuestionSubmitStatusEnum;
 import com.duu.ojserviceclient.service.QuestionFeignClient;
 
+import com.duu.sandbox.sdk.SandboxClient;
+import com.duu.sandbox.sdk.model.CodeRequest;
+import com.duu.sandbox.sdk.model.CodeResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -38,6 +42,10 @@ public class JudgeServiceImpl implements JudgeService {
 
     @Resource
     private JudgeManager judgeManager;
+    @Value("${duuoj.sandbox.access-key}")
+    public String accessKey;
+    @Value("${duuoj.sandbox.secret-key}")
+    public String secretKey;
 
     @Override
     public QuestionSubmit doJudge(long questionSubmitId) {
@@ -71,15 +79,26 @@ public class JudgeServiceImpl implements JudgeService {
         String judgeCaseStr = question.getJudgeCase();
         List<JudgeCase> judgeCases = JSONUtil.toList(judgeCaseStr, JudgeCase.class);
         List<String> inputList = judgeCases.stream().map(JudgeCase::getInput).collect(Collectors.toList());
-        ExecuteCodeRequest executeCodeRequest = ExecuteCodeRequest.builder().code(code)
-                .language(language).inputList(inputList).build();
-
+        ExecuteCodeRequest executeCodeRequest = ExecuteCodeRequest.builder().code(code).language(language).inputList(inputList).build();
         String executeCodeRequestJson = JSONUtil.toJsonStr(executeCodeRequest);
         String post = HttpUtil.post("localhost:8103/api/execute", executeCodeRequestJson);
         ExecuteCodeResponse executeCodeResponse = JSONUtil.toBean(post, ExecuteCodeResponse.class);
-        //ExecuteCodeResponse executeCodeResponse = codeSandbox.executeCode(executeCodeRequest);
-        List<String> outputList = executeCodeResponse.getOutputList();
         JudgeInfo judgeInfo = executeCodeResponse.getJudgeInfo();
+        List<String> outputList = executeCodeResponse.getOutputList();
+     //测试 代码沙箱sdk
+        //   CodeRequest codeRequest = CodeRequest.builder().code(code).language(language).inputList(inputList).build();
+        //String executeCodeRequestJson = JSONUtil.toJsonStr(executeCodeRequest);
+//        SandboxClient sandboxClient = new SandboxClient(accessKey, secretKey);
+//        CodeResponse codeResponse = sandboxClient.executeCode(codeRequest);
+//        com.duu.sandbox.sdk.model.JudgeInfo judgeInfo = codeResponse.getJudgeInfo();
+        //测试SDK时 包类型转换
+//        String message = judgeInfo.getMessage();
+//        Long memory = judgeInfo.getMemory();
+//        Long time = judgeInfo.getTime();
+//        JudgeInfo judgeInfo1 = new JudgeInfo();
+//        judgeInfo1.setMessage(message);
+//        judgeInfo1.setMemory(memory);
+//        judgeInfo1.setTime(time);
 //        5）根据沙箱的执行结果，设置题目的判题状态和信息
         JudgeContext judgeContext = new JudgeContext();
         judgeContext.setJudgeInfo(judgeInfo);

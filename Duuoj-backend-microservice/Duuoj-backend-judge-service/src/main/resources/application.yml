@@ -78,3 +78,7 @@ mybatis-plus:
 # 开启knife4j接口文档
 knife4j:
   enable: true
+duuoj:
+  sandbox:
+    access-key: b1b58889562213235d858b0d8f91e085
+    secret-key: 662cea6e0654d2be521d6a2fe80818ec

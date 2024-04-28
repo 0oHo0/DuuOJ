@@ -1,4 +1,4 @@
-package com.duu.sandbox;
+package com.duu.sandbox.template.java;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.UUID;
@@ -7,6 +7,7 @@ import com.duu.sandbox.model.ExecuteCodeRequest;
 import com.duu.sandbox.model.ExecuteCodeResponse;
 import com.duu.sandbox.model.ExecuteMessage;
 import com.duu.sandbox.model.JudgeInfo;
+import com.duu.sandbox.template.CodeSandbox;
 import com.duu.sandbox.utils.ProcessUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -19,20 +20,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Duu
- * @description
- * @date 2024/04/19 19:26
- * @from https://github.com/0oHo0
+ * @author : duu
+ * @data : 2023/12/15
+ * @from ：https://github.com/0oHo0
  **/
 @Slf4j
 @Component
-public class CppCodeSandboxTemplate implements CodeSandbox{
+public class JavaCodeSandboxTemplate implements CodeSandbox {
+
+    private static final String SECURITY_MANAGER_PATH = "D:\\Data\\Code\\OJ\\DuuOJ-Sandbox\\src\\main\\resources" +
+            "\\security";
+
+    private static final String SECURITY_MANAGER_CLASS_NAME = "MySecurityManager";
+
     public static final WordTree WORD_TREE;
     static {
         WORD_TREE=new WordTree();
         WORD_TREE.addWords("Files", "exec");
     }
-    public File saveCodeToFile(String code) {
+    protected File saveCodeToFile(String code) {
         if(WORD_TREE.isMatch(code)){
             throw new RuntimeException("代码中有敏感词");
         }
@@ -42,7 +48,7 @@ public class CppCodeSandboxTemplate implements CodeSandbox{
             FileUtil.mkdir(globalCodePathName);
         }
         String userCodeParentPath = globalCodePathName + File.separator + UUID.randomUUID();
-        String userCodePath = userCodeParentPath + File.separator + "main.cpp";
+        String userCodePath = userCodeParentPath + File.separator + "Main.java";
         File file = FileUtil.writeString(code, userCodePath, StandardCharsets.UTF_8);
         return file;
     }
@@ -68,8 +74,8 @@ public class CppCodeSandboxTemplate implements CodeSandbox{
         return outputResponse;
     }
 
-    public ExecuteMessage compileFile(File userCodeFile) {
-        String compileCmd = String.format("g++ -o %s/build %s",userCodeFile.getParentFile().getAbsolutePath(),userCodeFile.getAbsolutePath());
+    protected ExecuteMessage compileFile(File userCodeFile) {
+        String compileCmd = String.format("javac -encoding utf-8 %s", userCodeFile.getAbsolutePath());
         try {
             Process process = Runtime.getRuntime().exec(compileCmd);
             ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(process, "编译");
@@ -78,12 +84,12 @@ public class CppCodeSandboxTemplate implements CodeSandbox{
             throw new RuntimeException("编译出错");
         }
     }
-    public List<ExecuteMessage> runFile(File userCodeFile, List<String> inputList){
+    protected List<ExecuteMessage> runFile(File userCodeFile, List<String> inputList){
         String userCodeParentFilePath = userCodeFile.getParentFile().getAbsolutePath();
         ArrayList<ExecuteMessage> executeMessageArrayList = new ArrayList<>();
         for (String input : inputList) {
             //String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s;%s -Djava.security.manager=%s Main %s", userCodeParentFilePath, SECURITY_MANAGER_PATH, SECURITY_MANAGER_CLASS_NAME, input);
-            String runCmd = String.format("%s/build %s", userCodeParentFilePath, input);
+            String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s Main %s", userCodeParentFilePath, input);
             try {
                 Process process = Runtime.getRuntime().exec(runCmd);
                 ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(process, "执行");
@@ -95,7 +101,7 @@ public class CppCodeSandboxTemplate implements CodeSandbox{
         return executeMessageArrayList;
     }
 
-    public ExecuteCodeResponse getOutputResponse(List<ExecuteMessage> executeMessageList) {
+    protected ExecuteCodeResponse getOutputResponse(List<ExecuteMessage> executeMessageList) {
         ExecuteCodeResponse executeCodeResponse = new ExecuteCodeResponse();
         List<String> outputList = new ArrayList<>();
         long maxTime = 0;

@@ -29,4 +29,10 @@
         thumbNum,favourNum,userId,
         createTime,updateTime,isDelete
     </sql>
+    <select id="selectall" parameterType="com.duu.ojmodel.model.entity.Question">
+        select * from question
+        <if test="id != null">
+            where id == #{id}
+        </if>
+    </select>
 </mapper>

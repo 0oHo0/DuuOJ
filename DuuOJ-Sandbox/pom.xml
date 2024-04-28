@@ -5,6 +5,7 @@
     <groupId>com.duu</groupId>
     <artifactId>DuuOJ-Sandbox</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
     <name>DuuOJ-Sandbox</name>
     <description>DuuOJ-Sandbox</description>
     <properties>
@@ -85,6 +86,23 @@
                 </configuration>
             </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <!--开启过滤，用指定的参数替换directory下的文件中的参数  用于通过maven控制本地启动项目时的环境，具体可看：https://blog.csdn.net/zhangruilinmoo/article/details/129744532-->
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/*.*</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/java</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/*.*</include>
+                </includes>
+            </resource>
+        </resources>
     </build>
 
 </project>

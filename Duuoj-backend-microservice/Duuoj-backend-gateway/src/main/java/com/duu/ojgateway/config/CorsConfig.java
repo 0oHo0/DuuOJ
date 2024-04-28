@@ -9,7 +9,9 @@ import org.springframework.web.util.pattern.PathPatternParser;
 
 import java.util.Arrays;
 
-// 处理跨域
+/**
+ * @author Duu
+ */ // 处理跨域
 @Configuration
 public class CorsConfig {
 

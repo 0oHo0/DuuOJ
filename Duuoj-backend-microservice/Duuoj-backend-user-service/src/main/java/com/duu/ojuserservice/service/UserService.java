@@ -114,4 +114,6 @@ public interface UserService extends IService<User> {
 
 
     Long getTodayUserActive();
+
+    String getUserSecretKey(String accessKey);
 }

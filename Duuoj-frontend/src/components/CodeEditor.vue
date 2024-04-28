@@ -24,8 +24,8 @@ interface Props {
  * 给组件指定初始值
  */
 const props = withDefaults(defineProps<Props>(), {
-  value: () => "public class Main{ public static void main(String args[]){ }}",
-  language: () => "java",
+  value: () => "",
+  language: () => "cpp",
   handleChange: (v: string) => {
     console.log(v);
   },

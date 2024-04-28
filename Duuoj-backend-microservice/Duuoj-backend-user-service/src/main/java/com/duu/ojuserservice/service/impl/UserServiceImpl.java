@@ -3,8 +3,10 @@ package com.duu.ojuserservice.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.duu.ojcommon.common.ErrorCode;
@@ -28,6 +30,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
@@ -90,10 +94,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             }
             // 2. 加密
             String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
+            String accessKey = DigestUtils.md5DigestAsHex((SALT + userAccount + RandomUtil.randomString(4)).getBytes());
+            String secretKey = DigestUtils.md5DigestAsHex((SALT + userAccount + RandomUtil.randomString(8)).getBytes());
             // 3. 插入数据
             User user = new User();
             user.setUserAccount(userAccount);
             user.setUserPassword(encryptPassword);
+            user.setAccessKey(accessKey);
+            user.setSecretKey(secretKey);
             boolean saveResult = this.save(user);
             if (!saveResult) {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
@@ -304,5 +312,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return stringRedisTemplate.execute((RedisCallback<Long>) connection ->
                 connection.bitCount(todayStr.getBytes())
         );
+    }
+
+    @Override
+    public String getUserSecretKey(String accessKey) {
+        LambdaQueryWrapper<User> select = new LambdaQueryWrapper<>(User.class).eq(User::getAccessKey, accessKey).select(User::getSecretKey);
+        User user = this.getOne(select);
+        return user.getSecretKey();
     }
 }

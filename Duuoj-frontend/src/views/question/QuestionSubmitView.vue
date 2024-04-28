@@ -85,10 +85,10 @@ const loadData = async () => {
         res.data.records[i].status = "待判题";
       } else if (res.data.records[i].status == 1) {
         res.data.records[i].status = "判题中";
-      } else if (res.data.records[i].status == 2) {
-        res.data.records[i].status = "已判题";
-      } else {
+      } else if (res.data.records[i].status == 3) {
         res.data.records[i].status = "判题失败";
+      } else {
+        res.data.records[i].status = "已判题";
       }
     }
     dataList.value = res.data.records;

@@ -17,8 +17,28 @@ public interface RedisKeyConstant {
     String IP = "ip";
 
     String SESSION_ID = "sessionId";
-
+    /**
+     * 缓存题目 key
+     */
     String QUESTION_ID="questionId:";
-
+    /**
+     * 缓存做题进度
+     */
     String QUESTION_STATISTICS_KEY = "question_statistics:";
+    /**
+     * getQuestion锁 （解决缓存击穿）
+     */
+    String GET_QUESTION_LOCK = "get_question_lock:";
+    /**
+     * getQuestion 过滤器 （解决缓存穿透）
+     */
+    String GET_QUESTION_FILTER = "get_question_filter";
+    /**
+     * 接口限流
+     */
+    String REQUEST_LIMIT = "req_lim:";
+    /**
+     * 评论点赞
+     */
+    String COMMENT_LIKE = "comment_like:";
 }

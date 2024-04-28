@@ -74,6 +74,15 @@ public class User implements Serializable {
     private String userRole;
 
     /**
+     * 访问密钥
+     */
+    private String accessKey;
+    /**
+     * 密钥
+     */
+    private String secretKey;
+
+    /**
      * 创建时间
      */
     private Date createTime;
