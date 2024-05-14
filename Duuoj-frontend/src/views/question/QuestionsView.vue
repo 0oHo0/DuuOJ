@@ -48,7 +48,9 @@
               "
             >
               <template #default="{ percentage }">
-                <span class="percentage-value">{{ percentage }}%</span>
+                <span class="percentage-value"
+                  >{{ percentage.toFixed(0) }}%</span
+                >
                 <span class="percentage-label">当前进度</span>
               </template>
             </el-progress>

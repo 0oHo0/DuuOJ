@@ -49,12 +49,29 @@
           >
             <a-select
               v-model="form.language"
-              :style="{ width: '320px' }"
+              :style="{ width: '120px' }"
               placeholder="选择编程语言"
             >
               <a-option>cpp</a-option>
               <a-option>java</a-option>
             </a-select>
+            <a-form-item style="min-width: 60px">
+              <a-popover title="ACM模式">
+                <a-button>ACM模式<icon-info-circle /></a-button>
+                <template #content>
+                  <p>请通过代码实现题目，过程中的输入输</p>
+                  <p>出处理方式请参考题目输入输出描述</p>
+                </template>
+              </a-popover>
+            </a-form-item>
+            <a-form-item style="min-width: 60px">
+              <a-popover>
+                <a-button>语言版本</a-button>
+                <template #content>
+                  <p>java1.8 / g++</p>
+                </template>
+              </a-popover>
+            </a-form-item>
           </a-form-item>
         </a-form>
         <CodeEditor
@@ -112,7 +129,6 @@ const form = ref<QuestionSubmitAddRequest>({
     "#include <iostream>\n" +
     "#include<string.h>\n" +
     "using namespace std;\n" +
-    "//自行处理输入字符串转int \n" +
     "int main(int argc, char* argv[])\n" +
     "{\n\n" +
     "    return 0;\n" +

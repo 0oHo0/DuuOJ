@@ -2,13 +2,13 @@ package com.duu.sandbox;
 
 import com.duu.sandbox.model.ExecuteCodeRequest;
 import com.duu.sandbox.model.ExecuteCodeResponse;
+import com.duu.sandbox.template.CodeSandbox;
+import com.duu.sandbox.template.java.JavaCodeSandboxTemplate;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.Scanner;
 
 /**
  * @author : duu
@@ -18,15 +18,19 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 class JavaCodeSandboxTemplateTest {
     @Test
-    public static void main(String[] args) {
-        String code = "public class Main {\n" +
+    public void main() {
+        String code = "import java.util.*;\n" +
                 "\n" +
-                "    public static void main(String[] args) {\n" +
-                "        int a = Integer.parseInt(args[0]);\n" +
-                "        int b = Integer.parseInt(args[1]);\n" +
-                "        System.out.println(\"结果:\" + (a + b));\n" +
+                "public class Main{\n" +
+                "    public static void main(String args[]){\n" +
+                "       Scanner scanner = new Scanner(System.in);\n" +
+                "       Integer a = scanner.nextInt();\n" +
+                "       Integer b = scanner.nextInt();\n" +
+                "       int sum = a+b;\n" +
+                "       System.out.println(sum);\n" +
+                "             \n" +
                 "    }\n" +
-                "}\n";
+                "}";
         CodeSandbox codeSandbox = new JavaCodeSandboxTemplate();
         ExecuteCodeRequest executeCodeRequest = new ExecuteCodeRequest();
         executeCodeRequest.setCode(code);

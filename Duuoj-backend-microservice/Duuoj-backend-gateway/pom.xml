@@ -33,6 +33,14 @@
             <version>4.3.0</version>
         </dependency>
         <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-alibaba-sentinel-gateway</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.duu</groupId>
             <artifactId>Duuoj-backend-common</artifactId>
             <version>0.0.1-SNAPSHOT</version>

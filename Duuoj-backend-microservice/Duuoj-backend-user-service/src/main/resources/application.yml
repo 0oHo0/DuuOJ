@@ -25,6 +25,9 @@ spring:
     username: root
     password: dhc00319
   cloud:
+    sentinel:
+      transport:
+        dashboard: localhost:8080
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848
@@ -51,7 +54,7 @@ server:
   address: 0.0.0.0
   port: 8108
   servlet:
-    context-path: /api/user
+    context-path: /api
     # cookie 30 天过期
     session:
       cookie:

@@ -30,7 +30,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
-
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
  * @from https://github.com/0oHo0
  */
 @RestController
-@RequestMapping("/")
+@RequestMapping("/user")
 @Slf4j
 public class UserController {
 

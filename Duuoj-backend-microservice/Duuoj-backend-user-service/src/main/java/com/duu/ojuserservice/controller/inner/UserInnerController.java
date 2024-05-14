@@ -19,7 +19,7 @@ import java.util.Optional;
  * @from ：https://github.com/0oHo0
  **/
 @RestController
-@RequestMapping("/inner")
+@RequestMapping("/user/inner")
 public class UserInnerController implements UserFeignClient {
     @Resource
     private UserService userService;

@@ -2,6 +2,7 @@ package com.duu.ojquestionservice.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.BooleanUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.csp.sentinel.util.AssertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -61,6 +62,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -219,19 +221,19 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
     }
 
     @Override
-    public Question getQuestionByRedis(Long questionId) {
+    public Optional<Question> getQuestionByRedis(Long questionId) {
         String key = RedisKeyConstant.QUESTION_ID+questionId.toString();
         // 使用布隆过滤器解决缓存穿透
         RBloomFilter<Object> filter = redissonClient.getBloomFilter(GET_QUESTION_FILTER);
         if(!filter.contains(questionId)){
-            return null;
+            return Optional.empty();
         }
         ValueOperations<String, String> operations = stringRedisTemplate.opsForValue();
         String jsonStr = operations.get(key);
         Question question;
         if (jsonStr==null||jsonStr.isEmpty()){
             // 加互斥锁 解决缓存击穿
-            String lockKey = RedisKeyConstant.GET_QUESTION_LOCK+questionId.toString();
+            String lockKey = RedisKeyConstant.GET_QUESTION_LOCK+ questionId;
             Boolean setIfAbsent = stringRedisTemplate.opsForValue().setIfAbsent(lockKey, "1", 5, TimeUnit.SECONDS);
             if (BooleanUtil.isTrue(setIfAbsent)) {
                 question = this.getById(questionId);
@@ -240,7 +242,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
                 stringRedisTemplate.delete(lockKey);
             }else {
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(200);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -248,7 +250,11 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
             }
         }
         question = JSONUtil.toBean(jsonStr, Question.class);
-        return question;
+        if (ObjectUtil.isNotNull(question)){
+            return Optional.of(question);
+        }else {
+            return Optional.empty();
+        }
     }
 
     @Override

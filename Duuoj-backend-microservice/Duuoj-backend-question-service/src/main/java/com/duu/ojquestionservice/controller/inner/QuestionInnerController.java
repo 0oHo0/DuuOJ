@@ -15,7 +15,7 @@ import javax.annotation.Resource;
  * @from ：https://github.com/0oHo0
  **/
 @RestController
-@RequestMapping("/inner")
+@RequestMapping("/question/inner")
 public class QuestionInnerController implements QuestionFeignClient {
     @Resource
     private QuestionService questionService;

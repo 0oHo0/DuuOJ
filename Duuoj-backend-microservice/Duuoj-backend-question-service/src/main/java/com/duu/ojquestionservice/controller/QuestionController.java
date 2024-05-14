@@ -9,6 +9,7 @@ import com.duu.ojcommon.common.BaseResponse;
 import com.duu.ojcommon.common.DeleteRequest;
 import com.duu.ojcommon.common.ErrorCode;
 import com.duu.ojcommon.common.ResultUtils;
+import com.duu.ojcommon.constant.RedisKeyConstant;
 import com.duu.ojcommon.constant.UserConstant;
 import com.duu.ojcommon.exception.BusinessException;
 import com.duu.ojcommon.exception.ThrowUtils;
@@ -25,6 +26,8 @@ import com.duu.ojserviceclient.service.UserFeignClient;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import net.bytebuddy.implementation.bytecode.Throw;
+import org.redisson.api.RBloomFilter;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -33,12 +36,13 @@ import static com.duu.ojcommon.constant.RedisKeyConstant.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 题目接口
  */
 @RestController
-@RequestMapping("/")
+@RequestMapping("/question")
 @Slf4j
 public class QuestionController {
 
@@ -65,6 +69,9 @@ public class QuestionController {
     @Resource
     private QuestionEsDao questionEsDao;
 
+    @Resource
+    private RedissonClient redissonClient;
+
     private final static Gson GSON = new Gson();
 
     /**
@@ -77,9 +84,7 @@ public class QuestionController {
     @PostMapping("/add")
     public BaseResponse<Long> addQuestion(@RequestBody QuestionAddRequest questionAddRequest,
                                           HttpServletRequest request) {
-        if (questionAddRequest == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
+        ThrowUtils.throwIf(questionAddRequest==null,ErrorCode.PARAMS_ERROR);
         Question question = new Question();
         BeanUtils.copyProperties(questionAddRequest, question);
         List<String> tags = questionAddRequest.getTags();
@@ -103,6 +108,8 @@ public class QuestionController {
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         questionEsDao.save(QuestionEsDTO.objToDto(question));
         long newQuestionId = question.getId();
+        RBloomFilter<Object> bloomFilter = redissonClient.getBloomFilter(GET_QUESTION_FILTER);
+        bloomFilter.add(newQuestionId);
         return ResultUtils.success(newQuestionId);
     }
 
@@ -188,16 +195,14 @@ public class QuestionController {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        Question question = questionService.getQuestionByRedis(id);
-        if (question == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
-        }
+        Optional<Question> question = questionService.getQuestionByRedis(id);
+        question.orElseThrow(()->new BusinessException(ErrorCode.NOT_FOUND_ERROR,"访问题目不存在"));
         User loginUser = userFeignClient.getLoginUser(request);
         // 不是本人或管理员，不能直接获取所有信息
-        if (!question.getUserId().equals(loginUser.getId()) && !userFeignClient.isAdmin(loginUser)) {
+        if (!question.get().getUserId().equals(loginUser.getId()) && !userFeignClient.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
-        return ResultUtils.success(question);
+        return ResultUtils.success(question.get());
     }
 
     /**
@@ -208,14 +213,10 @@ public class QuestionController {
      */
     @GetMapping("/get/vo")
     public BaseResponse<QuestionVO> getQuestionVOById(long id, HttpServletRequest request) {
-        if (id <= 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        Question question = questionService.getQuestionByRedis(id);
-        if (question == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
-        }
-        return ResultUtils.success(questionService.getQuestionVO(question, request));
+        ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
+        Optional<Question> question = questionService.getQuestionByRedis(id);
+        question.orElseThrow(()->new BusinessException(ErrorCode.NOT_FOUND_ERROR,"访问题目不存在"));
+        return ResultUtils.success(questionService.getQuestionVO(question.get(), request));
     }
 
     /**
@@ -247,9 +248,7 @@ public class QuestionController {
     @PostMapping("/my/list/page/vo")
     public BaseResponse<Page<QuestionVO>> listMyQuestionVOByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
                                                                  HttpServletRequest request) {
-        if (questionQueryRequest == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
+        ThrowUtils.throwIf(questionQueryRequest.getUserId() == null, ErrorCode.PARAMS_ERROR);
         User loginUser = userFeignClient.getLoginUser(request);
         questionQueryRequest.setUserId(loginUser.getId());
         long current = questionQueryRequest.getCurrent();

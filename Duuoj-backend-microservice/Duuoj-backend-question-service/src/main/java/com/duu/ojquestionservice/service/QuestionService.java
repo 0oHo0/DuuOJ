@@ -14,6 +14,7 @@ import com.duu.ojmodel.model.vo.QuestionVO;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Optional;
 
 /**
 * @author duu
@@ -57,7 +58,7 @@ public interface QuestionService extends IService<Question> {
      */
     Page<QuestionVO> getQuestionVOPage(Page<Question> questionPage, HttpServletRequest request);
 
-    Question getQuestionByRedis(Long questionId);
+    Optional<Question> getQuestionByRedis(Long questionId);
 
     Page<QuestionVO> searchQuestionByEs(SearchQueryRequest searchQueryRequest);
 

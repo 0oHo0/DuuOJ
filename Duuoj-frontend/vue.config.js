@@ -6,6 +6,10 @@ module.exports = defineConfig({
   chainWebpack(config) {
     config.plugin("monaco").use(new MonacoWebpackPlugin());
   },
+  devServer: {
+    // 项目启动端口之后会变成3000
+    port: 8081,
+  },
   // plugins: [vue()],
   // base: "./",
   // resolve: {
@@ -24,4 +28,3 @@ module.exports = defineConfig({
   //   },
   // },
 });
-

@@ -19,6 +19,12 @@ spring:
     port: 6379
     timeout: 5000
   cloud:
+    sentinel:
+      filter:
+        enabled: false
+      transport:
+        port: 8719
+        dashboard: localhost:9088
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848

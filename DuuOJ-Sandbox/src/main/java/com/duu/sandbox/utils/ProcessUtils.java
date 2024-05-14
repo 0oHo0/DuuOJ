@@ -35,6 +35,9 @@ public class ProcessUtils {
             if (exitValue == 0) {
                 System.out.println(opName + "成功");
                 // 分批获取进程的正常输出
+                InputStream inputStream = runProcess.getInputStream();
+                InputStreamReader reader = new InputStreamReader(inputStream);
+                BufferedReader reader1 = new BufferedReader(reader);
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(runProcess.getInputStream()));
                 List<String> outputStrList = new ArrayList<>();
                 // 逐行读取

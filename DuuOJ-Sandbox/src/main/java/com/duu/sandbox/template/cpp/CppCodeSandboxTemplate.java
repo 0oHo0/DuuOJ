@@ -28,13 +28,26 @@ import java.util.List;
 @Slf4j
 @Component
 public class CppCodeSandboxTemplate implements CodeSandbox {
+    // 敏感词树
     public static final WordTree WORD_TREE;
+
     static {
         WORD_TREE=new WordTree();
-        WORD_TREE.addWords("Files", "exec");
+        // 系统命令
+        WORD_TREE.addWords("system", "popen", "exec", "fork");
+        // 文件操作
+        WORD_TREE.addWords("rename","file");
+        // 系统调用
+        WORD_TREE.addWords("signal", "kill", "exit");
+        // 网络操作
+        WORD_TREE.addWords("socket", "bind", "listen", "connect" ,"recv");
+        // 线程操作
+        WORD_TREE.addWords("pthread");
     }
     public File saveCodeToFile(String code) {
         if(WORD_TREE.isMatch(code)){
+            String match = WORD_TREE.match(code);
+            log.info("检测到敏感词：{}",match);
             throw new RuntimeException("代码中有敏感词");
         }
         String userDir = System.getProperty("user.dir");
@@ -74,8 +87,7 @@ public class CppCodeSandboxTemplate implements CodeSandbox {
         try {
 
             Process process = Runtime.getRuntime().exec(compileCmd);
-            ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(process, "编译");
-            return executeMessage;
+            return ProcessUtils.runProcessAndGetMessage(process, "编译");
         } catch (IOException e) {
             throw new RuntimeException("编译出错");
         }

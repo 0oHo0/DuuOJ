@@ -25,11 +25,6 @@ import static com.duu.sandbox.constant.SandBoxConstants.TIME_OUT;
 @Service
 @Slf4j
 public class JavaNativeAcmSandbox extends JavaCodeSandboxTemplate {
-    @Value("${antares.sandbox.security-manager-path:/www/wwwroot/oj.zqk.asia-backend/security}")
-    private String SECURITY_MANAGER_PATH;
-    @Value("${antares.sandbox.security-manager-class-name:MySecurityManager}")
-    private String SECURITY_MANAGER_CLASS_NAME;
-
     @Override
     protected List<ExecuteMessage> runFile(File userCodeFile, List<String> inputList){
     String userCodeParentFilePath = userCodeFile.getParentFile().getAbsolutePath();
@@ -37,10 +32,10 @@ public class JavaNativeAcmSandbox extends JavaCodeSandboxTemplate {
         List<ExecuteMessage> executeMessageList = new ArrayList<>();
         for (String input : inputList) {
             //Linux下的命令
-            //String runCmd = String.format("/software/jdk1.8.0_361/bin/java -Xmx256m -Dfile.encoding=UTF-8 -cp %s:%s -Djava.security.manager=%s Main", userCodeParentFilePath, SECURITY_MANAGER_PATH, SECURITY_MANAGER_CLASS_NAME);
+            //String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s:%s -Djava.security.manager=%s Main", userCodeParentFilePath, SECURITY_MANAGER_PATH, SECURITY_MANAGER_CLASS_NAME);
             //Windows下的命令
-//             String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s;%s -Djava.security.manager=%s Main", dir, SECURITY_MANAGER_PATH, SECURITY_MANAGER_CLASS_NAME);
-            String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s Main", userCodeParentFilePath);
+            String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s;%s -Djava.security.manager=%s Main", userCodeParentFilePath, SECURITY_MANAGER_PATH, SECURITY_MANAGER_CLASS_NAME);
+            //String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s Main", userCodeParentFilePath);
             StopWatch stopWatch = new StopWatch();
             stopWatch.start();
 

@@ -81,7 +81,7 @@ public class JudgeServiceImpl implements JudgeService {
         List<String> inputList = judgeCases.stream().map(JudgeCase::getInput).collect(Collectors.toList());
         ExecuteCodeRequest executeCodeRequest = ExecuteCodeRequest.builder().code(code).language(language).inputList(inputList).build();
         String executeCodeRequestJson = JSONUtil.toJsonStr(executeCodeRequest);
-        String post = HttpUtil.post("localhost:8103/api/execute", executeCodeRequestJson);
+        String post = HttpUtil.post("http://localhost:8103/execute", executeCodeRequestJson);
         ExecuteCodeResponse executeCodeResponse = JSONUtil.toBean(post, ExecuteCodeResponse.class);
         JudgeInfo judgeInfo = executeCodeResponse.getJudgeInfo();
         List<String> outputList = executeCodeResponse.getOutputList();

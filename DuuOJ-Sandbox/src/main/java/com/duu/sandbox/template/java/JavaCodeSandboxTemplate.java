@@ -28,15 +28,30 @@ import java.util.List;
 @Component
 public class JavaCodeSandboxTemplate implements CodeSandbox {
 
-    private static final String SECURITY_MANAGER_PATH = "D:\\Data\\Code\\OJ\\DuuOJ-Sandbox\\src\\main\\resources" +
-            "\\security";
+    public static final String SECURITY_MANAGER_PATH = System.getProperty("user.dir") + File.separator + "src/main/resources/security";
 
-    private static final String SECURITY_MANAGER_CLASS_NAME = "MySecurityManager";
+    public static final String SECURITY_MANAGER_CLASS_NAME = "MySecurityManager";
 
+    // 敏感词树
     public static final WordTree WORD_TREE;
+
     static {
         WORD_TREE=new WordTree();
-        WORD_TREE.addWords("Files", "exec");
+        //系统命令
+        WORD_TREE.addWords("shutdown", "reboot");
+        // 文件操作 "exec"
+        WORD_TREE.addWords("File","File", "FileWriter", "FileReader", "IOUtils", "InputStream", "OutputStream");
+        //数据库操作
+        WORD_TREE.addWords( "jdbc", "sql", "executeQuery", "executeUpdate");
+        //反射
+        WORD_TREE.addWords("Class.forName", "ClassLoader", "Reflect", "Method", "Field");
+        //网络操作
+        WORD_TREE.addWords("URL", "URLConnection", "HttpURLConnection", "Socket", "ServerSocket", "InetAddress", "InetSocketAddress", "DatagramSocket", "DatagramPacket");
+        //进程操作
+        WORD_TREE.addWords("Runtime", "Process", "ProcessBuilder", "Runtime.getRuntime", "Runtime.exec");
+        // 获取系统环境变量
+        WORD_TREE.addWords("System.getenv", "System.getProperty");
+
     }
     protected File saveCodeToFile(String code) {
         if(WORD_TREE.isMatch(code)){
@@ -88,7 +103,7 @@ public class JavaCodeSandboxTemplate implements CodeSandbox {
         String userCodeParentFilePath = userCodeFile.getParentFile().getAbsolutePath();
         ArrayList<ExecuteMessage> executeMessageArrayList = new ArrayList<>();
         for (String input : inputList) {
-            //String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s;%s -Djava.security.manager=%s Main %s", userCodeParentFilePath, SECURITY_MANAGER_PATH, SECURITY_MANAGER_CLASS_NAME, input);
+            //String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s -Djava.security.manager=%s -classpath %s Main %s", userCodeParentFilePath, SECURITY_MANAGER_PATH, SECURITY_MANAGER_CLASS_NAME, input);
             String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s Main %s", userCodeParentFilePath, input);
             try {
                 Process process = Runtime.getRuntime().exec(runCmd);
