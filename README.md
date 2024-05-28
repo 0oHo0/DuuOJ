@@ -104,10 +104,37 @@
 
 ![OJConstruct](https://cdn.jsdelivr.net/gh/0oHo0/Picture@main/img/202403292014021.png)
 
+## 项目预览
+
+**登录页**
+
+![image-20240528165928619](https://cdn.jsdelivr.net/gh/0oHo0/Picture@main/img/202405281659728.png)
+
+**题目预览页**
+
+![image-20240528165955431](https://cdn.jsdelivr.net/gh/0oHo0/Picture@main/img/202405281659481.png)
+
+**题目作答页**
+
+![image-20240528165603088](https://cdn.jsdelivr.net/gh/0oHo0/Picture@main/img/202405281656172.png)
+
+**评论预览页**
+
+![image-20240528165637275](https://cdn.jsdelivr.net/gh/0oHo0/Picture@main/img/202405281656323.png)
+
+**答案页**![image-20240528165700052](https://cdn.jsdelivr.net/gh/0oHo0/Picture@main/img/202405281657097.png)
+
+**题目提交页**
+
+![image-20240528165728558](https://cdn.jsdelivr.net/gh/0oHo0/Picture@main/img/202405281657606.png)
+
+**个人信息页**
+
+![image-20240528165803715](https://cdn.jsdelivr.net/gh/0oHo0/Picture@main/img/202405281658763.png)
+
 ## 项目结构
 
 - Duuoj-backend  后端单体项目
-
 - Duuoj-backend-microservice  后端微服务项目
   - Duuoj-backend-common 公共类
   - Duuoj-backend-gateway 项目网关
@@ -116,10 +143,6 @@
   - Duuoj-backend-question-service 题目服务
   - Duuoj-backend-service-client  OpenFeign远程调用客户端
   - Duuoj-backend-user-service 用户服务
-  
 - Duuoj-frontend  前端项目
-
 - Duuoj-Sandbox 代码沙箱：编译及运行代码
-
-## 待扩展点  
 

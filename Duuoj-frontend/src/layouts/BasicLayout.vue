@@ -8,9 +8,8 @@
         <router-view />
       </a-layout-content>
       <a-layout-footer class="footer">
-        <a href="https://github.com/0oHo0" target="_blank">
-          开源项目Github地址
-        </a>
+        Copyright©
+        <a href="https://github.com/0oHo0" target="_blank"> Duu </a>
       </a-layout-footer>
     </a-layout>
   </div>
