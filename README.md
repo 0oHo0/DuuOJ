@@ -29,7 +29,7 @@
 
 1. 权限校验：配合网关JWT用户权限校验，使用Redis实现不同设备单点登录
 
-2. 代码沙箱（Docker与Java `Runtime`两种方式实现）
+2. 代码沙箱（~~Docker与~~Java `Runtime`两种方式实现）
 
    - 使用 JavaSecurity 与字典树限制代码权限
 
