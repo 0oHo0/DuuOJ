@@ -12,10 +12,9 @@
     <img src="https://img.shields.io/badge/Hutool-5.8.8-green.svg" alt="Hutool">
     <img src="https://img.shields.io/badge/MyBatis-2.2.2-yellow.svg" alt="MyBatis">
      <img src="https://img.shields.io/badge/Elasticsearch-7.17.9-blue.svg" alt="Elasticsearch">
-     <img src="https://img.shields.io/badge/DuuRPC-0.0.1-green.svg" alt="DuuRPC">
+    <img src="https://img.shields.io/badge/Spring Cloud Alibaba-2021.0.5-brightgreen.svg" alt="Spring Cloud Alibaba">
 </a>
 </p>
-
 
 
 
