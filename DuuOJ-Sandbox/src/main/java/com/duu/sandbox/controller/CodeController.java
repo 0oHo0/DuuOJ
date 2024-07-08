@@ -37,6 +37,9 @@ public class CodeController {
     private CodeSandbox javaNativeAcmSandbox;
 
     @Resource
+    private CodeSandbox javaNativeMultiAcmSandbox;
+
+    @Resource
     private CodeSandbox cppNativeAcmSandbox;
     @PostMapping("/execute/sign")
     public ExecuteCodeResponse executeCodeBySign(@RequestBody ExecuteCodeRequest executeCodeRequest, HttpServletRequest request){
@@ -96,6 +99,18 @@ public class CodeController {
         String language = executeCodeRequest.getLanguage();
         if(language.equals(CodeLanguage.JAVA.getName())){
             return javaNativeAcmSandbox.executeCode(executeCodeRequest);
+        }else if(language.equals(CodeLanguage.CPP.getName())){
+            return cppNativeAcmSandbox.executeCode(executeCodeRequest);
+        }else {
+            return null;
+        }
+    }
+
+    @PostMapping("/execute/multi")
+    public ExecuteCodeResponse multiExecuteCode(@RequestBody ExecuteCodeRequest executeCodeRequest){
+        String language = executeCodeRequest.getLanguage();
+        if(language.equals(CodeLanguage.JAVA.getName())){
+            return javaNativeMultiAcmSandbox.executeCode(executeCodeRequest);
         }else if(language.equals(CodeLanguage.CPP.getName())){
             return cppNativeAcmSandbox.executeCode(executeCodeRequest);
         }else {
